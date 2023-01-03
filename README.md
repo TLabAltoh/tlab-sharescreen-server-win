@@ -2,6 +2,8 @@
 A software encoder server application with a simple video codec using Nvidia's CUDA.
 A GPU that can use CUDA is an operating condition for this software.  
 I released a client asset for unity. You can download it from the link below.
+Although it was not possible to record due to spec problems (probably),  
+it works in the same way as a video even if it is run on an actual Android device.  
 
 
 https://youtu.be/5TwvHTh86SA
