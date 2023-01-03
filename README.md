@@ -8,13 +8,9 @@ it works in the same way as a video even if it is run on an actual Android devic
 
 https://youtu.be/PK0eoB0jQ_M
 
-<br>
-<br>
 
 https://user-images.githubusercontent.com/121733943/210447171-dd79dcfd-c64e-460e-81b2-7078929e0ea3.mp4
 
-<br>
-<br>
 
 This is an asset, and users can use it freely.
 However, the downloaded project has a build configuration for Android,
