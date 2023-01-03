@@ -16,5 +16,5 @@ This is an asset, and users can use it freely.
 However, the downloaded project has a build configuration for Android,
 so if you want to build for another platform, please change the appropriate settings.
 
-download link
+download link:  
 https://drive.google.com/u/4/uc?id=1ZDSRkiIXSrF7w85dee1f7VqI-uKQP6U_&export=download
