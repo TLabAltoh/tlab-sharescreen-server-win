@@ -2,7 +2,7 @@
 A software encoder server application with a simple video codec using Nvidia's CUDA and Windows Graphics Cpature API.
 
 ## Operating environment
-OS: Windows 10 pro
+OS: Windows 10 pro  
 GPU: Nvidia GForce GTX 1660 Super
 
 
