@@ -1,4 +1,4 @@
-# TLabShareScreen
+# TLabShareScreen_Server
 A software encoder server application with a simple video codec using Nvidia's CUDA and Windows Graphics Cpature API.
 
 ## demonstration
