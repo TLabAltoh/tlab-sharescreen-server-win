@@ -20,7 +20,7 @@ https://youtu.be/g4nKSnYe6RA
 OS: Windows 10 pro  
 GPU: Nvidia GForce GTX 1660 Super
 ### client
-OS: Android 10
+OS: Android 10  
 GPU: Qualcomm Adreno 619
 
 ## client software
