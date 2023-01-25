@@ -15,9 +15,9 @@ https://user-images.githubusercontent.com/121733943/210447171-dd79dcfd-c64e-460e
 
 ![DSC_0002](https://user-images.githubusercontent.com/121733943/211289979-46bfc2f3-c247-4015-b21d-ba5839f11a41.JPG)
 
-## Operating environment
+## operating environment
 OS: Windows 10 pro  
-GPU: Nvidia GForce GTX 1660 Super  
+GPU: NVIDIA GeForce GTX 1660 SUPER  
 CUDA: 11.5
 
 ## client software
