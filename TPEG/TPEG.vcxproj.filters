@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="TPEG.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TPEG.h" />
+    <ClInclude Include="TPEG_Kernels.cuh">
+      <Filter>Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="TPEG_DCT.cuh">
+      <Filter>Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="TPEG_Entropy.cuh">
+      <Filter>Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="TPEG_GetDiffSum.cuh">
+      <Filter>Kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="TLabCUDA_Common.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="TLabCUDA_Math.cuh">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="TPEG_Common.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="TPEG_Buffer.cuh" />
+    <ClInclude Include="UserCnf.cuh" />
+    <ClInclude Include="TPEG_Initialize.cuh">
+      <Filter>Kernels</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Kernels">
+      <UniqueIdentifier>{1cd2a805-fbf3-4ea1-80cb-bf21987dade7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{17a35698-d418-479a-83e0-208905dc7d28}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
