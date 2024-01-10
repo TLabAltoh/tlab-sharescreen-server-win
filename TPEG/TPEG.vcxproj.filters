@@ -8,32 +8,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TPEG.h" />
-    <ClInclude Include="TPEG_Kernels.cuh">
-      <Filter>Kernels</Filter>
-    </ClInclude>
-    <ClInclude Include="TPEG_DCT.cuh">
-      <Filter>Kernels</Filter>
-    </ClInclude>
-    <ClInclude Include="TPEG_Entropy.cuh">
-      <Filter>Kernels</Filter>
-    </ClInclude>
-    <ClInclude Include="TPEG_GetDiffSum.cuh">
-      <Filter>Kernels</Filter>
-    </ClInclude>
-    <ClInclude Include="TLabCUDA_Common.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="TLabCUDA_Math.cuh">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="TPEG_Common.h">
-      <Filter>Util</Filter>
-    </ClInclude>
     <ClInclude Include="TPEG_Buffer.cuh" />
-    <ClInclude Include="UserCnf.cuh" />
-    <ClInclude Include="TPEG_Initialize.cuh">
-      <Filter>Kernels</Filter>
-    </ClInclude>
+    <ClInclude Include="user_conf.cuh" />
+    <ClInclude Include="cuda_common.h" />
+    <ClInclude Include="cuda_math.cuh" />
+    <ClInclude Include="dct.cuh" />
+    <ClInclude Include="dct_util.h" />
+    <ClInclude Include="diff_sum.cuh" />
+    <ClInclude Include="entropy.cuh" />
+    <ClInclude Include="initialize.cuh" />
+    <ClInclude Include="kernels.cuh" />
+    <ClInclude Include="tpeg_common.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Kernels">
@@ -42,5 +27,8 @@
     <Filter Include="Util">
       <UniqueIdentifier>{17a35698-d418-479a-83e0-208905dc7d28}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Document.htm" />
   </ItemGroup>
 </Project>

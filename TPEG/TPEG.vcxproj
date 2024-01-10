@@ -86,20 +86,26 @@
     <CudaCompile Include="TPEG.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TPEG_Initialize.cuh" />
+    <ClInclude Include="cuda_common.h" />
+    <ClInclude Include="cuda_math.cuh" />
+    <ClInclude Include="dct.cuh" />
+    <ClInclude Include="dct_util.h" />
+    <ClInclude Include="diff_sum.cuh" />
+    <ClInclude Include="entropy.cuh" />
+    <ClInclude Include="initialize.cuh" />
+    <ClInclude Include="kernels.cuh" />
     <ClInclude Include="TPEG_Buffer.cuh" />
-    <ClInclude Include="TPEG_GetDiffSum.cuh" />
-    <ClInclude Include="TPEG_Common.h" />
-    <ClInclude Include="TPEG_Kernels.cuh" />
-    <ClInclude Include="TPEG_Entropy.cuh" />
-    <ClInclude Include="TLabCUDA_Common.h" />
-    <ClInclude Include="TPEG_DCT.cuh" />
+    <ClInclude Include="tpeg_common.h" />
     <ClInclude Include="TPEG.h" />
-    <ClInclude Include="TLabCUDA_Math.cuh" />
-    <ClInclude Include="UserCnf.cuh" />
+    <ClInclude Include="user_conf.cuh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Document.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

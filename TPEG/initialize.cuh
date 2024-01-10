@@ -1,6 +1,6 @@
 #pragma
 
-#include "TPEG_Common.h"
+#include "cuda_common.h"
 
 __global__ void SetBlockIdx(char* encFrameBuffer) {
 

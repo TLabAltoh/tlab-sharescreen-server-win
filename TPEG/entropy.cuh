@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TPEG_Common.h"
+#include "cuda_common.h"
 
 // NO USE --------------
 // RUN_BIT_SIZE 6
@@ -32,10 +32,7 @@
 
 #define ERROR_CHECK 1
 
-__global__ void EntropyForward(
-	short* dctFrameBuffer,
-	char* encFrameBuffer,
-	unsigned short* blockDiffSumBuffer
+__global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buffer, unsigned short* block_diff_sum_buffer
 ) {
 	// Block index.
 	const short bIdx = blockIdx.y * gridDim.x + blockIdx.x;
@@ -45,16 +42,16 @@ __global__ void EntropyForward(
 
 	// EncFrame's block hedder.
 	char* hedder =
-		encFrameBuffer +
+		encoded_frame_buffer +
 		(size_t)bIdx *
 		(BLOCK_HEDDER_SIZE + ENC_BUFFER_BLOCK_SIZE * DST_COLOR_SIZE);
 
 	// Check this block needs to send as packet.
 #if 1
-	if (blockDiffSumBuffer[bIdx] == 0) {
+	if (block_diff_sum_buffer[bIdx] == 0) {
 
 		// Reset block diff sum buffer.
-		blockDiffSumBuffer[bIdx] = 0;
+		block_diff_sum_buffer[bIdx] = 0;
 
 		// Set flag "no need to encode".
 		hedder[BLOCK_COLOR_SIZE_IDX_OFFSET + (int)cIdx] = (char)NO_NEED_TO_ENCODE;
@@ -67,8 +64,8 @@ __global__ void EntropyForward(
 	char* pixelData = hedder + BLOCK_HEDDER_SIZE + ((size_t)cIdx << ENC_BUFFER_BLOCK_SIZE_LOG2);
 
 	// DCTFrame's data gram index.
-	short* dctFrameBufferPt =
-		dctFrameBuffer +
+	short* dct_result_bufferPt =
+		dct_result_buffer +
 		(size_t)bIdx *
 		(BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)cIdx << BLOCK_SIZE_LOG2);
 
@@ -79,11 +76,10 @@ __global__ void EntropyForward(
 #pragma unroll
 
 	// 0 ~ 62 (63 ELEM)
-	for (int i = 0; i < BLOCK_SIZE - 1; i++, dctFrameBufferPt++) {
-		level = dctFrameBufferPt[PIXEL_VALUE];
+	for (int i = 0; i < BLOCK_SIZE - 1; i++, dct_result_bufferPt++) {
+		level = dct_result_bufferPt[PIXEL_VALUE];
 
-		if (level == 0 || level == (short)(1 << 15)) {
-			// if DCT buffer's level is invalid.
+		if (level == 0 || level == (short)(1 << 15)) { // +0, -0
 
 			// count up run value.
 			run++;
@@ -133,7 +129,7 @@ __global__ void EntropyForward(
 	}
 
 	// 63 (1ELEM)
-	level = dctFrameBufferPt[PIXEL_VALUE];
+	level = dct_result_bufferPt[PIXEL_VALUE];
 	pixelData[BIG_ENDIAN_DIX] = (char)((unsigned short)level << LEVEL_BIG_OFFSET);
 	pixelData[LITTLE_ENDIAN_IDX] =
 		(char)(
@@ -147,19 +143,19 @@ __global__ void EntropyForward(
 	hedder[BLOCK_COLOR_SIZE_IDX_OFFSET + (int)cIdx] = (char)++sum;
 }
 
-__global__ void EntropyInvert(char* encFrame, short* dctFrameBuffer) {
+__global__ void EntropyInvert(char* encoded_frame_buffer, short* dct_result_buffer) {
 	// Block index.
 	const short bIdx = blockIdx.y * gridDim.x + blockIdx.x;
 	const char cIdx = threadIdx.x;
 
 	// EncFrame's block hedder.
-	char* hedder = encFrame + (size_t)bIdx * (BLOCK_HEDDER_SIZE + ENC_BUFFER_BLOCK_SIZE * DST_COLOR_SIZE);
+	char* hedder = encoded_frame_buffer + (size_t)bIdx * (BLOCK_HEDDER_SIZE + ENC_BUFFER_BLOCK_SIZE * DST_COLOR_SIZE);
 
 	// this pixel color's data grame pointer.
 	char* pixelData = hedder + BLOCK_HEDDER_SIZE + ((size_t)cIdx << ENC_BUFFER_BLOCK_SIZE_LOG2);
 
 	// DiffFrame's data gram index.
-	short* dctFrameBufferPt = dctFrameBuffer + (size_t)bIdx * (BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)cIdx << BLOCK_SIZE_LOG2);
+	short* dct_result_bufferPt = dct_result_buffer + (size_t)bIdx * (BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)cIdx << BLOCK_SIZE_LOG2);
 
 	unsigned char bigEndian;
 	unsigned char littleEndian;
@@ -188,7 +184,7 @@ __global__ void EntropyInvert(char* encFrame, short* dctFrameBuffer) {
 #endif
 
 		// 1 0 0 0 0 0 0 1 (= 129)
-		dctFrameBufferPt[i] =
+		dct_result_bufferPt[i] =
 			(short)((unsigned short)(littleEndian & (unsigned char)129) << LEVEL_LITTLE_OFFSET) |
 			(short)((unsigned short)bigEndian >> LEVEL_BIG_OFFSET);
 	}

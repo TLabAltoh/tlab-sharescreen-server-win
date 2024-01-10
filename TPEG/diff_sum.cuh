@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TPEG_Common.h"
+#include "cuda_common.h"
 
 __shared__ unsigned short FrameRowDiffSumBuffer[BLOCK_AXIS_SIZE];
 

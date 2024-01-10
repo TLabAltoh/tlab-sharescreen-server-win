@@ -1,49 +1,40 @@
 #pragma once
 
-#include "TLabCUDA_Common.h"
-#include "TLabCUDA_Math.cuh"
-#include "UserCnf.cuh"
+#include "cuda_common.h"
+#include "cuda_math.cuh"
+#include "user_conf.cuh"
 
-// RGBA INDEX.
-#define R_IDX 0
-#define G_IDX 1
-#define B_IDX 2
-#define A_IDX 3
+#define R 0
+#define G 1
+#define B 2
+#define A 3
 
-// YCrCb INDEX.
-#define Y_IDX 0
-#define Cr_IDX 1
-#define Cb_IDX 2
+#define Y 0
+#define Cr 1
+#define Cb 2
 
-// THRESHOLD TO PIXEL UPDATE.
 #define DIFF_THRESHOLD 32
 #define SAME_VALUE_FLAG 0
-#define COUNT_IDX 1
+#define COUNT 1
 
 // BLOCK_HEDDER_SIZE
 // BLOCK INDEX: 2BYTE
 // PIXEL DATA SIZE PER BLOCK: 3BYTE
 #define BLOCK_HEDDER_SIZE 5
-#define BLOCK_IDX_UPPER_IDX 0
-#define BLOCK_IDX_LOWER_IDX 1
-#define BLOCK_BIT_SIZE_IDX_B 2
-#define BLOCK_BIT_SIZE_IDX_G 3
-#define BLOCK_BIT_SIZE_IDX_R 4
+#define BLOCK_INDEX_BE 0
+#define BLOCK_INDEX_LE 1
+#define BLOCK_BIT_SIZE_B 2
+#define BLOCK_BIT_SIZE_G 3
+#define BLOCK_BIT_SIZE_R 4
 
-// COLOR_SIZE
 #define ORG_COLOR_SIZE 4
 #define DST_COLOR_SIZE 3
 
-// 8 * 8 BLOCK'S AXIS SIZE.
 #define BLOCK_AXIS_SIZE	8
-// LOG2(BLOCK_AXIS_SIZE)
-#define BLOCK_AXIS_SIZE_LOG2 3
+#define BLOCK_AXIS_SIZE_LOG2 3	// LOG2(BLOCK_AXIS_SIZE)
 
-
-// BLOCK_AXIS_SIZE * BLOCK_AXIS_SIZE
-#define BLOCK_SIZE 64
-// LOG2(BLOCK_SIZE)
-#define BLOCK_SIZE_LOG2 6
+#define BLOCK_SIZE 64	// BLOCK_AXIS_SIZE * BLOCK_AXIS_SIZE
+#define BLOCK_SIZE_LOG2 6	// LOG2(BLOCK_SIZE)
 
 
 // BLOCK_SIZE * ORG_COLOR_SIZE
