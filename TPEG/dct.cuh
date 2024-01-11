@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include "cuda_common.h"
-#include "dct_util.h"
 #include "tpeg_common.h"
+#include "tpeg_cuda.h"
 
 __device__ void CUD8x8DCT_Butterfly(float* Vect0, int Step)
 {
@@ -50,19 +49,19 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 
 	if (block_diff_sum_buffer[block_dispatch_idx] == 0) return;
 
-	short* dct_result_buffer_ptr = dct_result_buffer + block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
+	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
 
 #pragma unroll
 
 	unsigned int frame_buffer_y = blockIdx.y << BLOCK_AXIS_SIZE_LOG2;
 	unsigned int frame_buffer_x = blockIdx.x << BLOCK_AXIS_SIZE_LOG2;
-	unsigned int frame_buffer_stride = gridDim.x << BLOCK_AXIS_SIZE;
+	unsigned int frame_buffer_stride = gridDim.x << BLOCK_AXIS_SIZE_LOG2;
 
 	for (unsigned int i = 0; i < BLOCK_AXIS_SIZE; i++) {
 		for (unsigned int j = 0; j < BLOCK_AXIS_SIZE; j++) {
 
 			unsigned int frame_buffer_idx = (frame_buffer_y + j) * frame_buffer_stride + (frame_buffer_x + i);
-			frame_buffer_idx *= ORG_COLOR_SIZE;
+			frame_buffer_idx *= DST_COLOR_SIZE;
 			
 			unsigned int block_copy_dst_idx = (j << BLOCK_AXIS_SIZE_LOG2) + i;
 
@@ -107,9 +106,9 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 		const float quantizationLuminance = InvertQuantizationTable50Luminance[i];
 		const float quantizationChrominance = InvertQuantizationTable50Chrominance[i];
 
-		dct_result_buffer_ptr[i * DST_COLOR_SIZE + (Y << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_y[i], quantizationLuminance);
-		dct_result_buffer_ptr[i * DST_COLOR_SIZE + (Cr << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cr[i], quantizationChrominance);
-		dct_result_buffer_ptr[i * DST_COLOR_SIZE + (Cb << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cb[i], quantizationChrominance);
+		dct_result_buffer_ptr[(Y << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_y[i], quantizationLuminance);
+		dct_result_buffer_ptr[(Cr << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cr[i], quantizationChrominance);
+		dct_result_buffer_ptr[(Cb << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cb[i], quantizationChrominance);
 	}
 }
 
@@ -159,7 +158,7 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 	const int block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
 	const int thread_dispatch_idx = (threadIdx.y << BLOCK_AXIS_SIZE_LOG2) + threadIdx.x;
 
-	short* dct_result_buffer_ptr = dct_result_buffer + block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
+	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
 
 #pragma unroll
 
@@ -195,13 +194,13 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 
 	unsigned int frame_buffer_y = blockIdx.y << BLOCK_AXIS_SIZE_LOG2;
 	unsigned int frame_buffer_x = blockIdx.x << BLOCK_AXIS_SIZE_LOG2;
-	unsigned int frame_buffer_stride = gridDim.x << BLOCK_AXIS_SIZE;
+	unsigned int frame_buffer_stride = gridDim.x << BLOCK_AXIS_SIZE_LOG2;
 
 	for (unsigned int i = 0; i < BLOCK_AXIS_SIZE; i++) {
 		for (unsigned int j = 0; j < BLOCK_AXIS_SIZE; j++) {
 
 			unsigned int frame_buffer_idx = (frame_buffer_y + j) * frame_buffer_stride + (frame_buffer_x + i);
-			frame_buffer_idx *= ORG_COLOR_SIZE;
+			frame_buffer_idx *= SRC_COLOR_SIZE;
 
 			unsigned int block_copy_dst_idx = (j << BLOCK_AXIS_SIZE_LOG2) + i;
 

@@ -1,97 +1,70 @@
 #pragma once
 
-#include "cuda_common.h"
+#include "tpeg_common.h"
+#include "tpeg_cuda.h"
 
-// NO USE --------------
-// RUN_BIT_SIZE 6
-// LEVEL_BIT_SIZE 12
-// BYTE_BIT_SIZE 8
-// ---------------------
+/**
+*  big endian:
+*	level (1 bit) : position 9
+*	run_length (6 bit) : position 5 ~ 0
+*	level (1 bit) : position 8
+* 
+*  little endian:
+*	level (8 bit) : position 7 ~ 0
+*/
 
-// CONSTITUTION ---------------------
-// BIG_ENDIAN: LEVEL (9) (1BIT): RUN (5 ~ 0) (6BIT): LEVEL (8) (1BIT) ... TOTAL 8BIT
-// LITTLE_ENDIAN: LEVEL (7 ~ 0) (8BIT) ... TOTAL 8BIT
-// -----------------------------------------------------------------------------------
+#define BIG_ENDIAN_IDX 0	// level's lower 8 bit
+#define LITTLE_ENDIAN_IDX 1	// level's upper 2 bit (8 ~ 9) + run's lower 6 bit (0 ~ 5)
 
-// LEVEL'S LOWER 8 BIT(0 ~ 7)
-#define BIG_ENDIAN_DIX 0
-// LEVEL'S UPPER 2 BIT (8 ~ 9) + RUN'S LOWER 6 BIT (0 ~ 5)
-#define LITTLE_ENDIAN_IDX 1
-
-#define RUN_OFFSET 1
-// LEVEL'S UPPER 8 BIT OFFSET(ACTUALY 2 BIT)
-#define LEVEL_BIG_OFFSET 0
-// LEVEL'S LOWER 8 BIT OFFSET
+#define RUN_LENGTH_OFFSET 1
 #define LEVEL_LITTLE_OFFSET 8
-
-#define PIXEL_VALUE 0
-
-#define BLOCK_COLOR_SIZE_IDX_OFFSET 2
 
 #define NO_NEED_TO_ENCODE 0
 
-#define ERROR_CHECK 1
+__global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buffer, unsigned short* block_diff_sum_buffer) {
 
-__global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buffer, unsigned short* block_diff_sum_buffer
-) {
-	// Block index.
-	const short bIdx = blockIdx.y * gridDim.x + blockIdx.x;
+	unsigned int block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
 
-	// Color index
-	const char cIdx = threadIdx.x;
+	unsigned int color_channel_idx = threadIdx.x;
 
-	// EncFrame's block hedder.
-	char* hedder =
-		encoded_frame_buffer +
-		(size_t)bIdx *
-		(BLOCK_HEDDER_SIZE + ENC_BUFFER_BLOCK_SIZE * DST_COLOR_SIZE);
+	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_AXIS_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE);
 
 	// Check this block needs to send as packet.
-#if 1
-	if (block_diff_sum_buffer[bIdx] == 0) {
+	if (block_diff_sum_buffer[block_dispatch_idx] == 0) {
 
 		// Reset block diff sum buffer.
-		block_diff_sum_buffer[bIdx] = 0;
+		block_diff_sum_buffer[block_dispatch_idx] = 0;
 
 		// Set flag "no need to encode".
-		hedder[BLOCK_COLOR_SIZE_IDX_OFFSET + (int)cIdx] = (char)NO_NEED_TO_ENCODE;
+		encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + color_channel_idx] = (char)NO_NEED_TO_ENCODE;
 
 		return;
 	}
-#endif
 
-	// this pixel color's data grame pointer.
-	char* pixelData = hedder + BLOCK_HEDDER_SIZE + ((size_t)cIdx << ENC_BUFFER_BLOCK_SIZE_LOG2);
+	// This pixel color's data grame pointer.
+	char* pixel_data_ptr = encoded_frame_buffer_ptr + BLOCK_HEDDER_SIZE + ((size_t)color_channel_idx << (BLOCK_SIZE_LOG2 + ENDIAN_SIZE_LOG2));
 
 	// DCTFrame's data gram index.
-	short* dct_result_bufferPt =
-		dct_result_buffer +
-		(size_t)bIdx *
-		(BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)cIdx << BLOCK_SIZE_LOG2);
+	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * (BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)color_channel_idx << BLOCK_SIZE_LOG2);
 
 	short level = 0;
-	unsigned char run = 0;
-	unsigned char sum = 0;
+	unsigned char sum = 0, run = 0;
 
 #pragma unroll
 
 	// 0 ~ 62 (63 ELEM)
-	for (int i = 0; i < BLOCK_SIZE - 1; i++, dct_result_bufferPt++) {
-		level = dct_result_bufferPt[PIXEL_VALUE];
-
+	for (int i = 0; i < BLOCK_SIZE - 1; i++, dct_result_buffer_ptr++) {
+		level = *(dct_result_buffer_ptr);
 		if (level == 0 || level == (short)(1 << 15)) { // +0, -0
 
-			// count up run value.
-			run++;
+			run++;	// count up run value
 
 			continue;
 		}
 
-		// if DCT buffer's level is validity.
-		// set level and run value to buffer.
+		// if DCT result buffer's level is validity, set level and run value to buffer
 
-		// Convert to a positive number so that the sign bit can also be shifted.
-		pixelData[BIG_ENDIAN_DIX] = (char)((unsigned short)level << LEVEL_BIG_OFFSET);
+		pixel_data_ptr[BIG_ENDIAN_IDX] = (char)((unsigned short)level);
 
 		/*
 		 10i     2‚Ì•â”•\Œ»
@@ -109,83 +82,63 @@ __global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buf
 		-128  ¨  10000000
 		*/
 
-		pixelData[LITTLE_ENDIAN_IDX] =
-			(char)(
-				((unsigned short)run << RUN_OFFSET) |
-				((unsigned short)level >> LEVEL_LITTLE_OFFSET)
-			);
+		pixel_data_ptr[LITTLE_ENDIAN_IDX] = (char)(((unsigned short)run << RUN_LENGTH_OFFSET) | ((unsigned short)level >> LEVEL_LITTLE_OFFSET));
 
-		// printf("level: %d\n", (unsigned short)(level >> LEVEL_LITTLE_OFFSET));
+		sum++;	// count buffer sum
 
-		// | | | | | | | |
-		// count buffer sum
-		sum++;
+		run = 0;	// reset run value
 
-		// reset run value.
-		run = 0;
-
-		// advance the pointer.
-		pixelData += ENDIAN_SIZE;
+		pixel_data_ptr += ENDIAN_SIZE;	// advance the pointer
 	}
 
 	// 63 (1ELEM)
-	level = dct_result_bufferPt[PIXEL_VALUE];
-	pixelData[BIG_ENDIAN_DIX] = (char)((unsigned short)level << LEVEL_BIG_OFFSET);
-	pixelData[LITTLE_ENDIAN_IDX] =
-		(char)(
-			((unsigned short)run << RUN_OFFSET) |
-			((unsigned short)level >> LEVEL_LITTLE_OFFSET)
-		);
-
-	// printf("level: %d\n", (unsigned short)(level >> LEVEL_LITTLE_OFFSET));
+	level = *(dct_result_buffer_ptr);
+	pixel_data_ptr[BIG_ENDIAN_IDX] = (char)((unsigned short)level);
+	pixel_data_ptr[LITTLE_ENDIAN_IDX] = (char)(((unsigned short)run << RUN_LENGTH_OFFSET) | ((unsigned short)level >> LEVEL_LITTLE_OFFSET));
 
 	// Reset save level's count.
-	hedder[BLOCK_COLOR_SIZE_IDX_OFFSET + (int)cIdx] = (char)++sum;
+	encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + (int)color_channel_idx] = (char)++sum;
 }
 
 __global__ void EntropyInvert(char* encoded_frame_buffer, short* dct_result_buffer) {
-	// Block index.
-	const short bIdx = blockIdx.y * gridDim.x + blockIdx.x;
-	const char cIdx = threadIdx.x;
 
-	// EncFrame's block hedder.
-	char* hedder = encoded_frame_buffer + (size_t)bIdx * (BLOCK_HEDDER_SIZE + ENC_BUFFER_BLOCK_SIZE * DST_COLOR_SIZE);
+	unsigned int block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
+
+	unsigned int color_channel_idx = threadIdx.x;
+
+	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_SIZE_LOG2 * ENDIAN_SIZE) * DST_COLOR_SIZE);
 
 	// this pixel color's data grame pointer.
-	char* pixelData = hedder + BLOCK_HEDDER_SIZE + ((size_t)cIdx << ENC_BUFFER_BLOCK_SIZE_LOG2);
+	char* pixel_data_ptr = encoded_frame_buffer_ptr + BLOCK_HEDDER_SIZE + ((size_t)color_channel_idx << (BLOCK_SIZE_LOG2 + ENDIAN_SIZE_LOG2));
 
 	// DiffFrame's data gram index.
-	short* dct_result_bufferPt = dct_result_buffer + (size_t)bIdx * (BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)cIdx << BLOCK_SIZE_LOG2);
+	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * (BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)color_channel_idx << BLOCK_SIZE_LOG2);
 
-	unsigned char bigEndian;
-	unsigned char littleEndian;
-	unsigned char run;
+	unsigned char big_endian, little_endian, run;
 
-	for (int i = 0, int count = 0; i < (BLOCK_SIZE - 1); i++, pixelData += ENDIAN_SIZE, count++) {
-		bigEndian = (unsigned char)pixelData[BIG_ENDIAN_DIX];
-		littleEndian = (unsigned char)pixelData[LITTLE_ENDIAN_IDX];
+	for (int i = 0, int count = 0; i < (BLOCK_SIZE - 1); i++, pixel_data_ptr += ENDIAN_SIZE, count++) {
+		big_endian = (unsigned char)pixel_data_ptr[BIG_ENDIAN_IDX];
+		little_endian = (unsigned char)pixel_data_ptr[LITTLE_ENDIAN_IDX];
 
-		// extract only bits corresponding to run.
-		// 1 1 1 1 1 1 1 1
-		//       &
-		// 0 1 1 1 1 1 1 0 (= 126)
-		//      >> 1
-		run = (littleEndian & (unsigned char)126) >> RUN_OFFSET;
+		/**
+		*  extract only bits corresponding to run length
+		*	1 1 1 1 1 1 1 1
+		*          &
+		*	0 1 1 1 1 1 1 0 (= 126)
+		* 
+		*	0 1 1 1 1 1 1 0 >> 1 = 0 0 1 1 1 1 1 1
+		*/
+		run = (little_endian & (unsigned char)126) >> RUN_LENGTH_OFFSET;
 		i += run;
 
-#if ERROR_CHECK
-		if (i > 63) {
-			printf("access validation."
-				   "run: % d, i : % d, count : % d, size : % d\n",
-				   run, i, count, hedder[BLOCK_COLOR_SIZE_IDX_OFFSET + cIdx]
-			);
-			return;
-		}
-#endif
-
-		// 1 0 0 0 0 0 0 1 (= 129)
-		dct_result_bufferPt[i] =
-			(short)((unsigned short)(littleEndian & (unsigned char)129) << LEVEL_LITTLE_OFFSET) |
-			(short)((unsigned short)bigEndian >> LEVEL_BIG_OFFSET);
+		/**
+		*  Combine the parts corresponding to the levels of the little endian and big endian, respectively.
+		*	1 1 1 1 1 1 1 1
+		*          &
+		*	1 0 0 0 0 0 0 1 (= 129)
+		* 
+		*	(1 0 0 0 0 0 0 1 << 8) | 1 1 1 1 1 1 1 1
+		*/
+		dct_result_buffer_ptr[i] = (short)((unsigned short)(little_endian & (unsigned char)129) << LEVEL_LITTLE_OFFSET) | (short)((unsigned short)big_endian);
 	}
 }

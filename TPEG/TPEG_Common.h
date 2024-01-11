@@ -1,9 +1,5 @@
 #pragma once
 
-#include "cuda_common.h"
-#include "cuda_math.cuh"
-#include "user_conf.cuh"
-
 #define R 0
 #define G 1
 #define B 2
@@ -17,9 +13,12 @@
 #define SAME_VALUE_FLAG 0
 #define COUNT 1
 
-// BLOCK_HEDDER_SIZE
-// BLOCK INDEX: 2BYTE
-// PIXEL DATA SIZE PER BLOCK: 3BYTE
+/**
+*  BLOCK_HEDDER_SIZE
+*  ----------------------
+*  BLOCK INDEX: 2BYTE
+*  PIXEL DATA SIZE PER BLOCK: 3BYTE
+*/
 #define BLOCK_HEDDER_SIZE 5
 #define BLOCK_INDEX_BE 0
 #define BLOCK_INDEX_LE 1
@@ -27,7 +26,7 @@
 #define BLOCK_BIT_SIZE_G 3
 #define BLOCK_BIT_SIZE_R 4
 
-#define ORG_COLOR_SIZE 4
+#define SRC_COLOR_SIZE 4
 #define DST_COLOR_SIZE 3
 
 #define BLOCK_AXIS_SIZE	8
@@ -36,19 +35,5 @@
 #define BLOCK_SIZE 64	// BLOCK_AXIS_SIZE * BLOCK_AXIS_SIZE
 #define BLOCK_SIZE_LOG2 6	// LOG2(BLOCK_SIZE)
 
-
-// BLOCK_SIZE * ORG_COLOR_SIZE
-#define BLOCK_SIZE_ORG_COLOR 256
-// LOG2(BLOCK_SIZE_ORG_COLOR)
-#define BLOCK_SIZE_ORG_COLOR_LOG2 8
-
-
-// BLOCK_SIZE * ENDIAN_SIZE
-#define ENC_BUFFER_BLOCK_SIZE 128
-// LOG2(ENC_BUFFER_BLOCK_SIZE)
-#define ENC_BUFFER_BLOCK_SIZE_LOG2 7
-
-// RUN(6BIT) + LEVEL(10BIT) = 2BYTE
-#define ENDIAN_SIZE 2
-// LOG2(ENDIAN_SIZE)
-#define ENDIAN_SIZE_LOG2 1
+#define ENDIAN_SIZE 2	// run_length (6 bit) + level (10 bit) = 16 bit = 2 byte
+#define ENDIAN_SIZE_LOG2 1	// LOG2(ENDIAN_SIZE)

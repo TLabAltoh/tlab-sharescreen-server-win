@@ -3,8 +3,4 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="TPEGImage.h" />
-    <ClInclude Include="Common.h" />
-  </ItemGroup>
 </Project>

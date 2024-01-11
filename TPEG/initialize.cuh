@@ -1,15 +1,16 @@
-#pragma
+#pragma once
 
-#include "cuda_common.h"
+#include "tpeg_common.h"
+#include "tpeg_cuda.h"
 
-__global__ void SetBlockIdx(char* encFrameBuffer) {
+__global__ void SetBlockIdx(char* encoded_frame_buffer) {
 
-	const short bIdx = blockIdx.y * gridDim.x + blockIdx.x;
+	const short block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
 
-	char* hedder = encFrameBuffer + (size_t)bIdx * (BLOCK_HEDDER_SIZE + ENC_BUFFER_BLOCK_SIZE * DST_COLOR_SIZE);
+	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE);
 
-	hedder[BLOCK_IDX_UPPER_IDX] = (char)((unsigned short)bIdx >> 8);
-	hedder[BLOCK_IDX_LOWER_IDX] = (char)(bIdx);
+	encoded_frame_buffer_ptr[BLOCK_INDEX_BE] = (char)((unsigned short)block_dispatch_idx >> 8);
+	encoded_frame_buffer_ptr[BLOCK_INDEX_LE] = (char)(block_dispatch_idx);
 
 	return;
 }

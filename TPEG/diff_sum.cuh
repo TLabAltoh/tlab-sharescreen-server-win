@@ -1,79 +1,55 @@
 #pragma once
 
-#include "cuda_common.h"
+#include "tpeg_common.h"
+#include "tpeg_cuda.h"
 
 __shared__ unsigned short FrameRowDiffSumBuffer[BLOCK_AXIS_SIZE];
 
 __global__ void GetDiffSum(
-	unsigned char* currentFrameBuffer,
-	unsigned char* prevFrameBuffer,
-	unsigned short* blockDiffSumBuffer
+	unsigned char* current_frame_buffer,
+	unsigned char* prev_frame_buffer,
+	unsigned short* block_diff_sum_buffer
 ) {
-	// tmporaly sum buffer.
-	unsigned short sum;
+	unsigned short sum, current_y, prev_y;
+	short diff_y;
 
-	//////////////////////////////////////////////////////////////////////////
-	// Calc frame's row tmp sum.
-	//
+	const int block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
 
-	// Get block index.
-	const int bIdx = blockIdx.y * gridDim.x + blockIdx.x;
+	unsigned int frame_pixel_offset =
+		(blockIdx.y * gridDim.x << BLOCK_SIZE_LOG2) +
+		(threadIdx.x * gridDim.x << BLOCK_AXIS_SIZE_LOG2) + (blockIdx.x << BLOCK_AXIS_SIZE_LOG2);
 
-	// Get a pointer to each buffer.
-	unsigned char* prevFrameBufferPt =
-		prevFrameBuffer +
-		(
-			((size_t)bIdx << BLOCK_SIZE_LOG2) +
-			((size_t)threadIdx.x << BLOCK_AXIS_SIZE_LOG2)
-		) * DST_COLOR_SIZE;
+	unsigned char* prev_frame_buffer_ptr = prev_frame_buffer + frame_pixel_offset * DST_COLOR_SIZE;
 
-	const unsigned char* currentFrameBufferPt =
-		currentFrameBuffer +
-		(
-			((size_t)blockIdx.y * gridDim.x << BLOCK_SIZE_LOG2) +
-			((size_t)threadIdx.x * gridDim.x << BLOCK_AXIS_SIZE_LOG2) + 
-			((size_t)blockIdx.x << BLOCK_AXIS_SIZE_LOG2)
-		) * ORG_COLOR_SIZE;
+	unsigned char* current_frame_buffer_ptr = current_frame_buffer + frame_pixel_offset * SRC_COLOR_SIZE;
 
 	sum = 0;
-	unsigned short currentY;
-	unsigned short prevY;
-	short diffY;
 
 #pragma unroll
 
 	for (int i = 0; i < BLOCK_AXIS_SIZE; i++) {
-		// Get luminance's diff value.
-		diffY =
-			(short)RGB2yCbCr_ForwardConvertor::Y(
-				currentFrameBufferPt[R_IDX],
-				currentFrameBufferPt[G_IDX],
-				currentFrameBufferPt[B_IDX]
-			) -
-			(short)RGB2yCbCr_ForwardConvertor::Y(
-				prevFrameBufferPt[R_IDX],
-				prevFrameBufferPt[G_IDX],
-				prevFrameBufferPt[B_IDX]
-			);
+		diff_y =
+			(short)Conv2Y(
+				current_frame_buffer_ptr[R],
+				current_frame_buffer_ptr[G],
+				current_frame_buffer_ptr[B])
+			- (short)Conv2Y(
+				prev_frame_buffer_ptr[R],
+				prev_frame_buffer_ptr[G],
+				prev_frame_buffer_ptr[B]);
 
-		// Count diff sum.
-		sum += (unsigned short)(diffY * (1 - (diffY < 0) * 2));
+		sum += (unsigned short)(diff_y * (1 - (diff_y < 0) * 2));
 
-		prevFrameBufferPt[R_IDX] = currentFrameBufferPt[R_IDX];
-		prevFrameBufferPt[G_IDX] = currentFrameBufferPt[G_IDX];
-		prevFrameBufferPt[B_IDX] = currentFrameBufferPt[B_IDX];
+		prev_frame_buffer_ptr[R] = current_frame_buffer_ptr[R];
+		prev_frame_buffer_ptr[G] = current_frame_buffer_ptr[G];
+		prev_frame_buffer_ptr[B] = current_frame_buffer_ptr[B];
 
-		// Increment the pinter.
-		currentFrameBufferPt += ORG_COLOR_SIZE;
-		prevFrameBufferPt += DST_COLOR_SIZE;
+		prev_frame_buffer_ptr += DST_COLOR_SIZE;
+		current_frame_buffer_ptr += SRC_COLOR_SIZE;
 	}
 
 	// set block's row sum to buffer.
 	FrameRowDiffSumBuffer[threadIdx.x] = sum;
-
-	//////////////////////////////////////////////////////////////////////////
-	// Calc frame's tmp sum.
-	//
 
 	__syncthreads();
 
@@ -83,7 +59,8 @@ __global__ void GetDiffSum(
 
 #pragma unroll
 
-	for (int i = 0; i < BLOCK_AXIS_SIZE; i++) sum += FrameRowDiffSumBuffer[i];
+	for (int i = 0; i < BLOCK_AXIS_SIZE; i++)
+		sum += FrameRowDiffSumBuffer[i];
 
-	blockDiffSumBuffer[bIdx] += sum;
+	block_diff_sum_buffer[block_dispatch_idx] += sum;
 }

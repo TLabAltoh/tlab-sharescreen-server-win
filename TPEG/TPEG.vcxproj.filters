@@ -8,27 +8,70 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TPEG.h" />
-    <ClInclude Include="TPEG_Buffer.cuh" />
+    <ClInclude Include="tpeg_buffer.cuh" />
     <ClInclude Include="user_conf.cuh" />
-    <ClInclude Include="cuda_common.h" />
-    <ClInclude Include="cuda_math.cuh" />
-    <ClInclude Include="dct.cuh" />
-    <ClInclude Include="dct_util.h" />
-    <ClInclude Include="diff_sum.cuh" />
-    <ClInclude Include="entropy.cuh" />
-    <ClInclude Include="initialize.cuh" />
-    <ClInclude Include="kernels.cuh" />
     <ClInclude Include="tpeg_common.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Kernels">
-      <UniqueIdentifier>{1cd2a805-fbf3-4ea1-80cb-bf21987dade7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Util">
-      <UniqueIdentifier>{17a35698-d418-479a-83e0-208905dc7d28}</UniqueIdentifier>
-    </Filter>
+    <ClInclude Include="test_common.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="test.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="test_util.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="dct.cuh">
+      <Filter>tpeg_cuda_kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="diff_sum.cuh">
+      <Filter>tpeg_cuda_kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="entropy.cuh">
+      <Filter>tpeg_cuda_kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="image_process_util.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="tpeg_cuda.h">
+      <Filter>tpeg_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="kernels.cuh">
+      <Filter>tpeg_cuda_kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="initialize.cuh">
+      <Filter>tpeg_cuda_kernels</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda_math.cuh">
+      <Filter>cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda_common.h">
+      <Filter>cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="dct_util.h">
+      <Filter>tpeg_cuda</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Document.htm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="cuda">
+      <UniqueIdentifier>{7930f20a-a5c2-437d-8263-84d58eb32013}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{c99e051f-21ec-40af-8716-565964770bc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tpeg_cuda">
+      <UniqueIdentifier>{25fb8ac2-d8e0-49ed-8368-8f2fe0495101}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tpeg_cuda_kernels">
+      <UniqueIdentifier>{531ebb33-1f5a-43da-bb0e-36bfc10b1019}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sample_image.png" />
   </ItemGroup>
 </Project>

@@ -1,128 +1,37 @@
 #pragma once
 
-#include "TPEG_Common.h"
+unsigned char* _current_frame_buffer_gpu;
 
-//////////////////////////////////////////////////////////////////////////////
-// RGBA_FRAME_BUFFER
-//
+unsigned char* _decoded_frame_buffer_gpu;
 
-/// <summary>
-/// current frame buffer on gpu.
-/// </summary>
-unsigned char* _currentFrameBuffer_G;
+unsigned char* _prev_frame_buffer_gpu;
 
-/// <summary>
-/// Buffer to record decoding result.
-/// GPU
-/// </summary>
-unsigned char* _decFrameBuffer_G;
+unsigned int _rgba_frame_buffer_size;
 
-/// <summary>
-/// RGBA frame buffer size.
-/// </summary>
-int _RGBAFrameBufferSize;
+unsigned int _rgb_frame_buffer_size;
 
-//////////////////////////////////////////////////////////////////////////////
-// RGB_FRAME_BUFFER
-//
+unsigned short* _block_diff_sum_buffer_gpu;
 
-/// <summary>
-/// prev frame buffer on gpu.
-/// </summary>
-unsigned char* _prevFrameBuffer_G;
+unsigned int _block_diff_sum_buffer_size;
 
-/// <summary>
-/// RGB frame buffer size.
-/// </summary>
-int _RGBFrameBufferSize;
+short* _dct_result_frame_buffer_gpu;
 
-//////////////////////////////////////////////////////////////////////////////
-// BLOCK_DIFF_SUM_BUFFER
-//
+short* _idct_result_frame_buffer_gpu;
 
-/// <summary>
-/// Total per block buffer on gpu.
-/// </summary>
-unsigned short* _blockDiffSumBuffer_G;
+unsigned int _dct_frame_buffer_size;
 
-/// <summary>
-/// _blockDiffSumBuffer's buffer size.
-/// </summary>
-int _blockDiffSumBufferSize;
+char* _encoded_frame_buffer_gpu;
 
-//////////////////////////////////////////////////////////////////////////////
-// DCT_FRAME_BUFFER
-//
+unsigned int _encoded_frame_buffer_size;
 
-/// <summary>
-/// A buffer that records the result of the
-/// dct transform for each block.
-/// </summary>
-short* _dctForwardFrameBuffer_G;
+char* _encoded_frame_buffer_cpu;
 
-/// <summary>
-/// Buffer for inverse DCT transform.
-/// </summary>
-short* _dctInvertFrameBuffer_G;
+unsigned char* _decoded_frame_buffer_cpu;
 
-/// <summary>
-/// DCT frame buffer size.
-/// </summary>
-int _DCTFrameBufferSize;
-
-//////////////////////////////////////////////////////////////////////////////
-// ENC_FRAME_BUFFER
-//
-
-/// <summary>
-/// Buffer to record encoding result.
-/// GPU
-/// </summary>
-char* _encFrameBuffer_G;
-
-/// <summary>
-/// Encoded frame buffer size.
-/// </summary>
-int _encFrameBufferSize;
-
-//////////////////////////////////////////////////////////////////////////////
-// ENC_AND_DEC_FRAME_BUFFER_HOST
-//
-
-/// <summary>
-/// Buffer to record encoding result.
-/// CPU
-/// </summary>
-char* _encFrameBuffer_C;
-
-/// <summary>
-/// Buffer to record decoding result.
-/// CPU
-/// </summary>
-unsigned char* _decFrameBuffer_C;
-
-//////////////////////////////////////////////////////////////////////////////
-// RESOLUTION
-//
-
-/// <summary>
-/// texture width.
-/// </summary>
 int _width;
 
-/// <summary>
-/// texture height.
-/// </summary>
 int _height;
 
-/// <summary>
-/// The width of the resolution
-/// where the texture is divided into blocks.
-/// </summary>
 int _blockWidth;
 
-/// <summary>
-/// The height of the resolution
-/// where the texture is divided into blocks.
-/// </summary>
 int _blockHeight;

@@ -1,20 +1,20 @@
 ﻿#pragma once
 
 #include "TPEG.h"
-#include "TPEG_Buffer.cuh"
-#include "TPEG_Kernels.cuh"
+#include "kernels.cuh"
+#include "tpeg_cuda.h"
+#include "tpeg_common.h"
+#include "tpeg_buffer.cuh"
 
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 
-#define DEBUG 0
-#define DEBUG_1 1
+#define DEBUG 1
 
 namespace TPEG {
 
 	int WarmingUp(int arg) {
-		// Warming up.
 		cudaFree(NULL);
 		return 0;
 	}
@@ -31,14 +31,14 @@ namespace TPEG {
 	int CreateBuffer() {
 		int num = 0;
 		// Encode.
-		if (CreateBuffer(_currentFrameBuffer_G, _RGBAFrameBufferSize, num, sizeof(unsigned char)) == 1)return 1;
-		if (CreateBuffer(_prevFrameBuffer_G, _RGBFrameBufferSize, num, sizeof(unsigned char)) == 1)return 1;
-		if (CreateBuffer(_blockDiffSumBuffer_G, _blockDiffSumBufferSize, num, sizeof(unsigned short)) == 1)return 1;
-		if (CreateBuffer(_dctForwardFrameBuffer_G, _DCTFrameBufferSize, num, sizeof(short)) == 1)return 1;
-		if (CreateBuffer(_encFrameBuffer_G, _encFrameBufferSize, num, sizeof(char)) == 1)return 1;
+		if (CreateBuffer(_current_frame_buffer_gpu, _rgba_frame_buffer_size, num, sizeof(unsigned char)) == 1)return 1;
+		if (CreateBuffer(_prev_frame_buffer_gpu, _rgb_frame_buffer_size, num, sizeof(unsigned char)) == 1)return 1;
+		if (CreateBuffer(_block_diff_sum_buffer_gpu, _block_diff_sum_buffer_size, num, sizeof(unsigned short)) == 1)return 1;
+		if (CreateBuffer(_dct_result_frame_buffer_gpu, _dct_frame_buffer_size, num, sizeof(short)) == 1)return 1;
+		if (CreateBuffer(_encoded_frame_buffer_gpu, _encoded_frame_buffer_size, num, sizeof(char)) == 1)return 1;
 		// Decode.
-		if (CreateBuffer(_dctInvertFrameBuffer_G, _DCTFrameBufferSize, num, sizeof(short)) == 1)return 1;
-		if (CreateBuffer(_decFrameBuffer_G, _RGBAFrameBufferSize, num, sizeof(unsigned char)) == 1)return 1;
+		if (CreateBuffer(_idct_result_frame_buffer_gpu, _dct_frame_buffer_size, num, sizeof(short)) == 1)return 1;
+		if (CreateBuffer(_decoded_frame_buffer_gpu, _rgba_frame_buffer_size, num, sizeof(unsigned char)) == 1)return 1;
 
 		return 0;
 	}
@@ -54,68 +54,59 @@ namespace TPEG {
 
 	int DestroyBuffer() {
 		int num = 0;
-		// Encode.
-		if (DestroyBuffer(_currentFrameBuffer_G, num) == 1)return 1;
-		if (DestroyBuffer(_prevFrameBuffer_G, num) == 1)return 1;
-		if (DestroyBuffer(_blockDiffSumBuffer_G, num) == 1)return 1;
-		if (DestroyBuffer(_dctForwardFrameBuffer_G, num) == 1)return 1;
-		if (DestroyBuffer(_encFrameBuffer_G, num) == 1)return 1;
-		// Decode.
-		if (DestroyBuffer(_decFrameBuffer_G, num) == 1)return 1;
-		if (DestroyBuffer(_dctInvertFrameBuffer_G, num) == 1)return 1;
+		// Encode
+		if (DestroyBuffer(_current_frame_buffer_gpu, num) == 1) return 1;
+		if (DestroyBuffer(_prev_frame_buffer_gpu, num) == 1) return 1;
+		if (DestroyBuffer(_block_diff_sum_buffer_gpu, num) == 1) return 1;
+		if (DestroyBuffer(_dct_result_frame_buffer_gpu, num) == 1) return 1;
+		if (DestroyBuffer(_encoded_frame_buffer_gpu, num) == 1) return 1;
+		// Decode
+		if (DestroyBuffer(_decoded_frame_buffer_gpu, num) == 1) return 1;
+		if (DestroyBuffer(_idct_result_frame_buffer_gpu, num) == 1) return 1;
 
 		return 0;
 	}
 
-	int InitializeDevice(
-		int width,
-		int height,
-		char* encFrameBuffer,
-		unsigned char* decFrameBuffer)
+	int InitializeDevice(int width, int height, char* encoded_frame_buffer, unsigned char* decoded_frame_buffer)
 	{
-		// Setup cording device.
-
 		_width = width;
 		_height = height;
 
 		_blockWidth = width >> BLOCK_AXIS_SIZE_LOG2;
 		_blockHeight = height >> BLOCK_AXIS_SIZE_LOG2;
 
-		int resolution = _width * _height;
-		int blockResolution = _blockWidth * _blockHeight;
-		int encBufferBlockUnitSize =
-			BLOCK_HEDDER_SIZE +
-			(BLOCK_SIZE * ENDIAN_SIZE) *
-			DST_COLOR_SIZE;
+		int frame_resolution = _width * _height;
+		int block_resolution = _blockWidth * _blockHeight;
+		int encoded_buffer_block_size = BLOCK_HEDDER_SIZE + (BLOCK_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE;
 
-		_RGBAFrameBufferSize = resolution * ORG_COLOR_SIZE;
-		_RGBFrameBufferSize = resolution * DST_COLOR_SIZE;
-		_blockDiffSumBufferSize = blockResolution;
-		_DCTFrameBufferSize = resolution * DST_COLOR_SIZE;
-		_encFrameBufferSize = blockResolution * encBufferBlockUnitSize;
+		_rgba_frame_buffer_size = frame_resolution * SRC_COLOR_SIZE;
+		_rgb_frame_buffer_size = frame_resolution * DST_COLOR_SIZE;
+		_block_diff_sum_buffer_size = block_resolution;
+		_dct_frame_buffer_size = frame_resolution * DST_COLOR_SIZE;
+		_encoded_frame_buffer_size = block_resolution * encoded_buffer_block_size;
 
-		_encFrameBuffer_C = encFrameBuffer;
-		_decFrameBuffer_C = decFrameBuffer;
+		_encoded_frame_buffer_cpu = encoded_frame_buffer;
+		_decoded_frame_buffer_cpu = decoded_frame_buffer;
 
-		printf("strlen(encFrameBuffer): %d\n", strlen((char*)encFrameBuffer));
-		printf("strlen(decFrameBuffer): %d\n", strlen((char*)decFrameBuffer));
+		printf("strlen(encoded_frame_buffer): %d\n", strlen((char*)encoded_frame_buffer));
+		printf("strlen(decoded_frame_buffer): %d\n", strlen((char*)decoded_frame_buffer));
 
 		if (CreateBuffer() == 1) {
 			printf("Error: CreateBuffer\n");
 			return 1;
 		}
 
-#if DEBUG_1
+#if DEBUG
 		// Copy encBuffer's meta buffer to gpu encBuffer
 
 		printf("\n-------------------------------------------------------\n");
-		printf("start copy encFrameBuffer's cpu data to gpu memory\n\n");
+		printf("start copy encoded_frame_buffer's cpu data to gpu memory\n\n");
 
 		// CPU --> GPU
 		cudaMemcpy(
-			_encFrameBuffer_G,
-			encFrameBuffer,
-			_encFrameBufferSize * sizeof(char),
+			_encoded_frame_buffer_gpu,
+			encoded_frame_buffer,
+			_encoded_frame_buffer_size * sizeof(char),
 			cudaMemcpyHostToDevice
 		);
 		cudaDeviceSynchronize();
@@ -123,36 +114,32 @@ namespace TPEG {
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\n-------------------------------------------------------\n");
-#endif
 
-#if 0
 		printf("\n-------------------------------------------------------\n");
-		printf("set block's index to encFrameBuffer\n\n");
+		printf("set block's index to encoded_frame_buffer\n\n");
 
 		dim3 GridDim(_blockWidth, _blockHeight, 1);
 		dim3 BlockDim1(1, 1, 1);
 
-		SetBlockIdx <<< GridDim, BlockDim1 >>> (
-			_encFrameBuffer_G
-		);
+		SetBlockIdx << < GridDim, BlockDim1 >> > (
+			_encoded_frame_buffer_gpu);
+
 		cudaDeviceSynchronize();
 
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\n-------------------------------------------------------\n");
-#endif
 
-#if DEBUG_1
 		printf("\n-------------------------------------------------------\n");
-		printf("start copy encFrameBuffer's gpu data to cpu memory\n\n");
+		printf("start copy encoded_frame_buffer's gpu data to cpu memory\n\n");
 
 		// CPU --> GPU
 		cudaMemcpy(
-			encFrameBuffer,
-			_encFrameBuffer_G,
-			_encFrameBufferSize * sizeof(char),
-			cudaMemcpyDeviceToHost
-		);
+			encoded_frame_buffer,
+			_encoded_frame_buffer_gpu,
+			_encoded_frame_buffer_size * sizeof(char),
+			cudaMemcpyDeviceToHost);
+
 		cudaDeviceSynchronize();
 
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
@@ -172,9 +159,8 @@ namespace TPEG {
 		return 0;
 	}
 
-	void DecFrame(char* encFrameBuffer) {
+	void DecodeFrame(char* encoded_frame_buffer) {
 		dim3 GridDim(_blockWidth, _blockHeight, 1);
-		dim3 BlockDim88(BLOCK_AXIS_SIZE, BLOCK_AXIS_SIZE, 1);
 		dim3 BlockDim8(BLOCK_AXIS_SIZE, 1, 1);
 		dim3 BlockDim3(DST_COLOR_SIZE, 1, 1);
 		dim3 BlockDim1(1, 1, 1);
@@ -186,78 +172,85 @@ namespace TPEG {
 #endif
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
+
 		// CPU --> GPU
 		cudaMemcpy(
-			_encFrameBuffer_G,
-			encFrameBuffer,
-			_encFrameBufferSize * sizeof(char),
-			cudaMemcpyHostToDevice
-		);
+			_encoded_frame_buffer_gpu,
+			encoded_frame_buffer,
+			_encoded_frame_buffer_size * sizeof(char),
+			cudaMemcpyHostToDevice);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
-		EntropyInvert <<< GridDim, BlockDim3 >> > (
-			_encFrameBuffer_G,
-			_dctInvertFrameBuffer_G
-		);
+
+		EntropyInvert << < GridDim, BlockDim3 >> > (
+			_encoded_frame_buffer_gpu,
+			_idct_result_frame_buffer_gpu);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
-		DCTInvert <<< GridDim, BlockDim88 >>> (
-			_dctInvertFrameBuffer_G,
-			_decFrameBuffer_G
-		);
+
+		CUD8x8IDCT_RGBFrame << < GridDim, BlockDim1 >> > (
+			_idct_result_frame_buffer_gpu,
+			_decoded_frame_buffer_gpu);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
+
 		// GPU --> CPU
 		cudaMemcpy(
-			_decFrameBuffer_C,
-			_decFrameBuffer_G,
-			_RGBAFrameBufferSize * sizeof(unsigned char),
-			cudaMemcpyDeviceToHost
-		);
+			_decoded_frame_buffer_cpu,
+			_decoded_frame_buffer_gpu,
+			_rgba_frame_buffer_size * sizeof(unsigned char),
+			cudaMemcpyDeviceToHost);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
-#endif
 #endif
 	}
 
-	void EncFrame(unsigned char* currentFrame) {
+	void EncodeFrame(unsigned char* current_frame) {
 
 		// Thread Divid
 		// https://youtu.be/cRY5utouJzQ?t=343
@@ -265,106 +258,116 @@ namespace TPEG {
 		// https://co-crea.jp/wp-content/uploads/2016/07/File_2.pdf p24.(Unlimited number of threads per axis).
 		// Get frame difference.
 		dim3 GridDim(_blockWidth, _blockHeight, 1);
-		dim3 BlockDim88(BLOCK_AXIS_SIZE, BLOCK_AXIS_SIZE, 1);
 		dim3 BlockDim8(BLOCK_AXIS_SIZE, 1, 1);
 		dim3 BlockDim3(DST_COLOR_SIZE, 1, 1);
 		dim3 BlockDim1(1, 1, 1);
 
 		WarmingUp(NULL);
 		int num = 0;
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
+
 		cudaMemcpy(
-			_currentFrameBuffer_G,
-			currentFrame,
-			_RGBAFrameBufferSize * sizeof(unsigned char),
-			cudaMemcpyHostToDevice
-		);
+			_current_frame_buffer_gpu,
+			current_frame,
+			_rgba_frame_buffer_size * sizeof(unsigned char),
+			cudaMemcpyHostToDevice);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
-		// Calc block row's total diff.
-		GetDiffSum <<< GridDim, BlockDim8 >>> (
-			_currentFrameBuffer_G,
-			_prevFrameBuffer_G,
-			_blockDiffSumBuffer_G
-		);
+
+		GetDiffSum << < GridDim, BlockDim8 >> > (	// Calc block row's total diff
+			_current_frame_buffer_gpu,
+			_prev_frame_buffer_gpu,
+			_block_diff_sum_buffer_gpu);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
-		DCTForward <<< GridDim, BlockDim88 >>> (
-			_prevFrameBuffer_G,
-			_blockDiffSumBuffer_G,
-			_dctForwardFrameBuffer_G
-		);
+
+		CUD8x8DCT_RGBFrame << < GridDim, BlockDim1 >> > (
+			_prev_frame_buffer_gpu,
+			_dct_result_frame_buffer_gpu,
+			_block_diff_sum_buffer_gpu);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
-		EntropyForward <<< GridDim, BlockDim3 >>> (
-			_dctForwardFrameBuffer_G,
-			_encFrameBuffer_G,
-			_blockDiffSumBuffer_G
-		);
+
+		EntropyForward << < GridDim, BlockDim3 >> > (
+			_dct_result_frame_buffer_gpu,
+			_encoded_frame_buffer_gpu,
+			_block_diff_sum_buffer_gpu);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-#if true
+
 #if DEBUG
 		printf("kernel%d start ----------------------------------------\n\n", num);
 #endif
+
 		// GPU --> CPU
 		cudaMemcpy(
-			_encFrameBuffer_C,
-			_encFrameBuffer_G,
-			_encFrameBufferSize * sizeof(char),
-			cudaMemcpyDeviceToHost
-		);
+			_encoded_frame_buffer_cpu,
+			_encoded_frame_buffer_gpu,
+			_encoded_frame_buffer_size * sizeof(char),
+			cudaMemcpyDeviceToHost);
+
 		cudaDeviceSynchronize();
+
 #if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\nkernel%d finished -------------------------------------\n\n", num++);
 #endif
-#endif
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #if DEBUG
 		printf("\nstart image decoding ---------------------------------\n\n");
-		DecFrame(_encFrameBuffer_C);
+		// DecodeFrame(_encoded_frame_buffer_cpu);
 		printf("\nfinish image decoding --------------------------------\n\n");
 #endif
 	}

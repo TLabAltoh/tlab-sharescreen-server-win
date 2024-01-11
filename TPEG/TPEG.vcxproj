@@ -23,7 +23,7 @@
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
@@ -42,9 +42,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)TPEG\bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)TLabShareScreenWireless\bin\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)TLabShareScreen_Server\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -92,12 +93,17 @@
     <ClInclude Include="dct_util.h" />
     <ClInclude Include="diff_sum.cuh" />
     <ClInclude Include="entropy.cuh" />
+    <ClInclude Include="image_process_util.h" />
     <ClInclude Include="initialize.cuh" />
     <ClInclude Include="kernels.cuh" />
-    <ClInclude Include="TPEG_Buffer.cuh" />
+    <ClInclude Include="test.h" />
+    <ClInclude Include="test_common.h" />
+    <ClInclude Include="tpeg_buffer.cuh" />
     <ClInclude Include="tpeg_common.h" />
     <ClInclude Include="TPEG.h" />
+    <ClInclude Include="tpeg_cuda.h" />
     <ClInclude Include="user_conf.cuh" />
+    <ClInclude Include="test_util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -106,6 +112,12 @@
     <None Include="Document.htm">
       <DeploymentContent>true</DeploymentContent>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sample_image.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
