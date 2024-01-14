@@ -100,10 +100,10 @@ int EncodeImage(char* path, int color_size) {
 	for (int i = 0; i < height; i++) {
 		org_frame_buffer = (unsigned char*)org_frame.GetBits() + (size_t)i * pitch;
 		for (int j = 0; j < width; j++) {
-			src_frame_buffer[src_idx + R] = org_frame_buffer[R];
-			src_frame_buffer[src_idx + G] = org_frame_buffer[G];
-			src_frame_buffer[src_idx + B] = org_frame_buffer[B];
-			src_frame_buffer[src_idx + A] = org_frame_buffer[A];
+			src_frame_buffer[src_idx + R_INDEX] = org_frame_buffer[R_INDEX];
+			src_frame_buffer[src_idx + G_INDEX] = org_frame_buffer[G_INDEX];
+			src_frame_buffer[src_idx + B_INDEX] = org_frame_buffer[B_INDEX];
+			src_frame_buffer[src_idx + A_INDEX] = org_frame_buffer[A_INDEX];
 			src_idx += SRC_COLOR_SIZE;
 			org_frame_buffer += color_size;
 		}
@@ -113,40 +113,11 @@ int EncodeImage(char* path, int color_size) {
 
 	printf("\nbitmap copyed ...\n");
 
-#if false
-	// copy decoded frame to org_frame_buffer.
-	src_idx = 0;
-	for (int i = 0; i < height; i++) {
-		org_frame_buffer = (unsigned char*)org_frame.GetBits() + (size_t)i * pitch;
-		for (int j = 0; j < width; j++) {
-			org_frame_buffer[R] = src_frame_buffer[src_idx + R];
-			org_frame_buffer[G] = src_frame_buffer[src_idx + G];
-			org_frame_buffer[B] = src_frame_buffer[src_idx + B];
-			org_frame_buffer[A] = src_frame_buffer[src_idx + A];
-			src_idx += SRC_COLOR_SIZE;
-			org_frame_buffer += color_size;
-		}
-	}
-
-	printf(
-		"org_frame.Save(sample_image.bmp): %s\n",
-		org_frame.Save((LPCTSTR)L"sample_image.bmp") == S_OK ? "succeeded" : "failed");
-#endif
-
-#if false
+#if true
 	loop_num = BLOCK_SIZE;
 	printf("Log encoded_frame_buffer first one block -------------------\n\n");
 	for (int i = 0; i < loop_num; i++) {
 		printf("src_frame_buffer[%d]\t: %d\n", i, src_frame_buffer[i]);
-	}
-	printf("------------------------------------------------------\n\n");
-#endif
-
-#if false
-	loop_num = BLOCK_SIZE * ENDIAN_SIZE * DST_COLOR_SIZE;
-	printf("Log before encoded_frame_buffer first one block ------------\n\n");
-	for (int i = 0; i < loop_num; i++) {
-		printf("before: encoded_frame_buffer[%d]\t: %d\n", i, encoded_frame_buffer[i]);
 	}
 	printf("------------------------------------------------------\n\n");
 #endif
@@ -159,16 +130,16 @@ int EncodeImage(char* path, int color_size) {
 
 	TPEG::DestroyDevice();
 
-#if false
+#if true
 	loop_num = BLOCK_SIZE * ENDIAN_SIZE * DST_COLOR_SIZE;
-	printf("Log after encoded_frame_buffer first one block -------------\n\n");
+	printf("Log encoded_frame_buffer first one block -------------\n\n");
 	for (int i = 0; i < loop_num; i++) {
-		printf("after: encoded_frame_buffer[%d]\t: %d\n", i, encoded_frame_buffer[i]);
+		printf("encoded_frame_buffer[%d]\t: %d\n", i, encoded_frame_buffer[i]);
 	}
 	printf("------------------------------------------------------\n\n");
 #endif
 
-#if false
+#if true
 	printf("Log decoded_frame_buffer first one block -------------------\n\n");
 	loop_num = BLOCK_SIZE;
 	for (int i = 0; i < loop_num; i++) {
@@ -184,39 +155,36 @@ int EncodeImage(char* path, int color_size) {
 	for (int i = 0; i < loop_num; i++) {
 		char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)i * (BLOCK_HEDDER_SIZE + BLOCK_SIZE * DST_COLOR_SIZE * ENDIAN_SIZE);
 
-		unsigned int tmp = encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + R];
-		if ((tmp > 64 || tmp < 0)) printf("inviled value in R: %d [%d]\n", tmp, i);
-		else sum += tmp * ENDIAN_SIZE;
+		unsigned int tmp = encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + R_INDEX];
+		if ((tmp > 64 || tmp < 0)) printf("inviled value in r: %d [%d]\n", tmp, i);
+		sum += tmp * ENDIAN_SIZE;
 
-		tmp = encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + G];
-		if ((tmp > 64 || tmp < 0)) printf("inviled value in G: %d [%d]\n", tmp, i);
-		else sum += tmp * ENDIAN_SIZE;
+		tmp = encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + G_INDEX];
+		if ((tmp > 64 || tmp < 0)) printf("inviled value in g: %d [%d]\n", tmp, i);
+		sum += tmp * ENDIAN_SIZE;
 
-		tmp = encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + B];
-		if ((tmp > 64 || tmp < 0)) printf("inviled value in B: %d [%d]\n", tmp, i);
-		else sum += tmp * ENDIAN_SIZE;
+		tmp = encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + B_INDEX];
+		if ((tmp > 64 || tmp < 0)) printf("inviled value in b: %d [%d]\n", tmp, i);
+		sum += tmp * ENDIAN_SIZE;
 	}
 	float befor_size = (float)width * height * DST_COLOR_SIZE * pow(10, -3);
-	float after_size = (float)sum * ENDIAN_SIZE * pow(10, -3);
+	float after_size = (float)sum * pow(10, -3);
 	printf("original frame size: %f\n", befor_size);
-	printf("sum: %d\n", sum);
 	printf("decoded frame size: %f\n", after_size);
 	printf("compression rate: %f %%\n", after_size / (double)befor_size * 100);
 	printf("------------------------------------------------------\n\n");
 #endif
-
-	return 0;
 
 	// copy decoded frame to org_frame_buffer.
 	src_idx = 0;
 	for (int i = 0; i < height; i++) {
 		org_frame_buffer = (unsigned char*)org_frame.GetBits() + (size_t)i * pitch;
 		for (int j = 0; j < width; j++) {
-			org_frame_buffer[R] = decoded_frame_buffer[src_idx + R];
-			org_frame_buffer[G] = decoded_frame_buffer[src_idx + G];
-			org_frame_buffer[B] = decoded_frame_buffer[src_idx + B];
-			org_frame_buffer[A] = decoded_frame_buffer[src_idx + A];
-			src_idx += DST_COLOR_SIZE;
+			org_frame_buffer[R_INDEX] = decoded_frame_buffer[src_idx + R_INDEX];
+			org_frame_buffer[G_INDEX] = decoded_frame_buffer[src_idx + G_INDEX];
+			org_frame_buffer[B_INDEX] = decoded_frame_buffer[src_idx + B_INDEX];
+			org_frame_buffer[A_INDEX] = decoded_frame_buffer[src_idx + A_INDEX];
+			src_idx += SRC_COLOR_SIZE;
 			org_frame_buffer += color_size;
 		}
 	}
@@ -224,8 +192,6 @@ int EncodeImage(char* path, int color_size) {
 	printf(
 		"org_frame.Save(decoded_result.bmp): %s\n",
 		org_frame.Save("decoded_result.bmp") == S_OK ? "succeeded" : "failed");
-
-	org_frame.ReleaseDC();
 
 	printf("Finish all process !\n");
 

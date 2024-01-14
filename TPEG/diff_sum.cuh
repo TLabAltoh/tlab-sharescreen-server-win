@@ -28,21 +28,22 @@ __global__ void GetDiffSum(
 #pragma unroll
 
 	for (int i = 0; i < BLOCK_AXIS_SIZE; i++) {
+
 		diff_y =
-			(short)Conv2Y(
-				current_frame_buffer_ptr[R],
-				current_frame_buffer_ptr[G],
-				current_frame_buffer_ptr[B])
-			- (short)Conv2Y(
-				prev_frame_buffer_ptr[R],
-				prev_frame_buffer_ptr[G],
-				prev_frame_buffer_ptr[B]);
+			Conv2Y(
+				current_frame_buffer_ptr[R_INDEX],
+				current_frame_buffer_ptr[G_INDEX],
+				current_frame_buffer_ptr[B_INDEX]) -
+			Conv2Y(
+				prev_frame_buffer_ptr[R_INDEX],
+				prev_frame_buffer_ptr[G_INDEX],
+				prev_frame_buffer_ptr[B_INDEX]);
 
 		sum += (unsigned short)(diff_y * (1 - (diff_y < 0) * 2));
 
-		prev_frame_buffer_ptr[R] = current_frame_buffer_ptr[R];
-		prev_frame_buffer_ptr[G] = current_frame_buffer_ptr[G];
-		prev_frame_buffer_ptr[B] = current_frame_buffer_ptr[B];
+		prev_frame_buffer_ptr[R_INDEX] = current_frame_buffer_ptr[R_INDEX];
+		prev_frame_buffer_ptr[G_INDEX] = current_frame_buffer_ptr[G_INDEX];
+		prev_frame_buffer_ptr[B_INDEX] = current_frame_buffer_ptr[B_INDEX];
 
 		prev_frame_buffer_ptr += DST_COLOR_SIZE;
 		current_frame_buffer_ptr += SRC_COLOR_SIZE;

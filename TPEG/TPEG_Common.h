@@ -1,17 +1,18 @@
 #pragma once
 
-#define R 0
-#define G 1
-#define B 2
-#define A 3
+#define R_INDEX 0
+#define G_INDEX 1
+#define B_INDEX 2
+#define A_INDEX 3
 
-#define Y 0
-#define Cr 1
-#define Cb 2
+#define Y_INDEX 0
+#define Cr_INDEX 1
+#define Cb_INDEX 2
 
 #define DIFF_THRESHOLD 32
 #define SAME_VALUE_FLAG 0
 #define COUNT 1
+#define NO_NEED_TO_ENCODE 0
 
 /**
 *  BLOCK_HEDDER_SIZE

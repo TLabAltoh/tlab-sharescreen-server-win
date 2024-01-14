@@ -5,21 +5,19 @@
 
 /**
 *  big endian:
-*	level (1 bit) : position 9
+*	level (1 bit) : position 16
 *	run_length (6 bit) : position 5 ~ 0
 *	level (1 bit) : position 8
-* 
+*
 *  little endian:
 *	level (8 bit) : position 7 ~ 0
 */
 
 #define BIG_ENDIAN_IDX 0	// level's lower 8 bit
-#define LITTLE_ENDIAN_IDX 1	// level's upper 2 bit (8 ~ 9) + run's lower 6 bit (0 ~ 5)
+#define LITTLE_ENDIAN_IDX 1	// level's upper 2 bit (8 , 16) + run's lower 6 bit (0 ~ 5)
 
 #define RUN_LENGTH_OFFSET 1
 #define LEVEL_LITTLE_OFFSET 8
-
-#define NO_NEED_TO_ENCODE 0
 
 __global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buffer, unsigned short* block_diff_sum_buffer) {
 
@@ -27,7 +25,7 @@ __global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buf
 
 	unsigned int color_channel_idx = threadIdx.x;
 
-	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_AXIS_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE);
+	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE);
 
 	// Check this block needs to send as packet.
 	if (block_diff_sum_buffer[block_dispatch_idx] == 0) {
@@ -106,7 +104,7 @@ __global__ void EntropyInvert(char* encoded_frame_buffer, short* dct_result_buff
 
 	unsigned int color_channel_idx = threadIdx.x;
 
-	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_SIZE_LOG2 * ENDIAN_SIZE) * DST_COLOR_SIZE);
+	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE);
 
 	// this pixel color's data grame pointer.
 	char* pixel_data_ptr = encoded_frame_buffer_ptr + BLOCK_HEDDER_SIZE + ((size_t)color_channel_idx << (BLOCK_SIZE_LOG2 + ENDIAN_SIZE_LOG2));
@@ -114,9 +112,9 @@ __global__ void EntropyInvert(char* encoded_frame_buffer, short* dct_result_buff
 	// DiffFrame's data gram index.
 	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * (BLOCK_SIZE * DST_COLOR_SIZE) + ((size_t)color_channel_idx << BLOCK_SIZE_LOG2);
 
-	unsigned char big_endian, little_endian, run;
+	unsigned char big_endian, little_endian, run, level;
 
-	for (int i = 0, int count = 0; i < (BLOCK_SIZE - 1); i++, pixel_data_ptr += ENDIAN_SIZE, count++) {
+	for (int i = 0; i < (BLOCK_SIZE - 1); i++, pixel_data_ptr += ENDIAN_SIZE) {
 		big_endian = (unsigned char)pixel_data_ptr[BIG_ENDIAN_IDX];
 		little_endian = (unsigned char)pixel_data_ptr[LITTLE_ENDIAN_IDX];
 
@@ -125,7 +123,7 @@ __global__ void EntropyInvert(char* encoded_frame_buffer, short* dct_result_buff
 		*	1 1 1 1 1 1 1 1
 		*          &
 		*	0 1 1 1 1 1 1 0 (= 126)
-		* 
+		*
 		*	0 1 1 1 1 1 1 0 >> 1 = 0 0 1 1 1 1 1 1
 		*/
 		run = (little_endian & (unsigned char)126) >> RUN_LENGTH_OFFSET;
@@ -136,7 +134,7 @@ __global__ void EntropyInvert(char* encoded_frame_buffer, short* dct_result_buff
 		*	1 1 1 1 1 1 1 1
 		*          &
 		*	1 0 0 0 0 0 0 1 (= 129)
-		* 
+		*
 		*	(1 0 0 0 0 0 0 1 << 8) | 1 1 1 1 1 1 1 1
 		*/
 		dct_result_buffer_ptr[i] = (short)((unsigned short)(little_endian & (unsigned char)129) << LEVEL_LITTLE_OFFSET) | (short)((unsigned short)big_endian);

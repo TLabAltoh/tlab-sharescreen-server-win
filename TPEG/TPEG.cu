@@ -10,7 +10,7 @@
 #include "stdlib.h"
 #include "string.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 namespace TPEG {
 
@@ -367,7 +367,7 @@ namespace TPEG {
 
 #if DEBUG
 		printf("\nstart image decoding ---------------------------------\n\n");
-		// DecodeFrame(_encoded_frame_buffer_cpu);
+		DecodeFrame(_encoded_frame_buffer_cpu);
 		printf("\nfinish image decoding --------------------------------\n\n");
 #endif
 	}

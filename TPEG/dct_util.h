@@ -105,15 +105,15 @@ __constant__ float InvertQuantizationTable50Chrominance[] = {
 *  B	= Y + 1.772 * Cb
 */
 __device__ inline float Conv2R(float y, float cr) {
-	return y + 1.402 * ((double)cr - 128);
+	return y + 1.402f * ((float)cr - 128.0f);
 }
 
 __device__ inline float Conv2G(float y, float cr, float cb) {
-	return y - 0.7141 * ((double)cr - 128) - 0.3441 * ((double)cb - 128);
+	return y - 0.7141f * ((float)cr - 128.0f) - 0.3441f * ((float)cb - 128.0f);
 }
 
 __device__ inline float Conv2B(float y, float cb) {
-	return y + 1.772 * ((double)cb - 128);
+	return y + 1.772f * ((float)cb - 128.0f);
 }
 
 
@@ -123,15 +123,15 @@ __device__ inline float Conv2B(float y, float cb) {
 *  Cb = -0.169 * R - 0.332 * G + 0.500 * B
 */
 __device__ inline unsigned char Conv2Y(unsigned char r, unsigned char g, unsigned char b) {
-	return (unsigned char)(0.299 * r + 0.587 * g + 0.114 * b);
+	return (unsigned char)(0.299f * r + 0.587f * g + 0.114f * b);
 }
 
 __device__ inline unsigned char Conv2Cr(unsigned char r, unsigned char g, unsigned char b) {
-	return (unsigned char)(0.500 * r - 0.4187 * g - 0.0813 * b + 128);
+	return (unsigned char)(0.500f * r - 0.4187f * g - 0.0813f * b + 128.0f);
 }
 
 __device__ inline unsigned char Conv2Cb(unsigned char r, unsigned char g, unsigned char b) {
-	return (unsigned char)(-0.169 * r - 0.322 * g + 0.500 * b + 128);
+	return (unsigned char)(-0.169f * r - 0.322f * g + 0.500f * b + 128.0f);
 }
 
 

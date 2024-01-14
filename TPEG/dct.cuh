@@ -51,11 +51,15 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 
 	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
 
-#pragma unroll
-
 	unsigned int frame_buffer_y = blockIdx.y << BLOCK_AXIS_SIZE_LOG2;
 	unsigned int frame_buffer_x = blockIdx.x << BLOCK_AXIS_SIZE_LOG2;
 	unsigned int frame_buffer_stride = gridDim.x << BLOCK_AXIS_SIZE_LOG2;
+
+	float* block_y_ptr = block_y;
+	float* block_cr_ptr = block_cr;
+	float* block_cb_ptr = block_cb;
+
+#pragma unroll
 
 	for (unsigned int i = 0; i < BLOCK_AXIS_SIZE; i++) {
 		for (unsigned int j = 0; j < BLOCK_AXIS_SIZE; j++) {
@@ -63,42 +67,36 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 			unsigned int frame_buffer_idx = (frame_buffer_y + j) * frame_buffer_stride + (frame_buffer_x + i);
 			frame_buffer_idx *= DST_COLOR_SIZE;
 			
+			unsigned char* frame_buffer_ptr = frame_buffer + frame_buffer_idx;
+
 			unsigned int block_copy_dst_idx = (j << BLOCK_AXIS_SIZE_LOG2) + i;
 
-			block_y[block_copy_dst_idx] = Conv2Y(
-				frame_buffer[frame_buffer_idx + R],
-				frame_buffer[frame_buffer_idx + G],
-				frame_buffer[frame_buffer_idx + B]
-			);
+			const unsigned char r = frame_buffer_ptr[R_INDEX];
+			const unsigned char g = frame_buffer_ptr[G_INDEX];
+			const unsigned char b = frame_buffer_ptr[B_INDEX];
 
-			block_cr[block_copy_dst_idx] = Conv2Cr(
-				frame_buffer[frame_buffer_idx + R],
-				frame_buffer[frame_buffer_idx + G],
-				frame_buffer[frame_buffer_idx + B]
-			);
-
-			block_cb[block_copy_dst_idx] = Conv2Cb(
-				frame_buffer[frame_buffer_idx + R],
-				frame_buffer[frame_buffer_idx + G],
-				frame_buffer[frame_buffer_idx + B]
-			);
+			block_y_ptr[block_copy_dst_idx] = Conv2Y(r, g, b);
+			block_cr_ptr[block_copy_dst_idx] = Conv2Cr(r, g, b);
+			block_cb_ptr[block_copy_dst_idx] = Conv2Cb(r, g, b);
 		}
 	}
 
 	// rocess rows
+	unsigned int row_offset;
 	for (unsigned int row = 0; row < BLOCK_AXIS_SIZE; row++) {
-		CUD8x8DCT_Butterfly(block_y + row, 1);
-		CUD8x8DCT_Butterfly(block_cr + row, 1);
-		CUD8x8DCT_Butterfly(block_cb + row, 1);
+		row_offset = row << BLOCK_AXIS_SIZE_LOG2;
+		CUD8x8DCT_Butterfly(block_y + row_offset, 1);
+		CUD8x8DCT_Butterfly(block_cr + row_offset, 1);
+		CUD8x8DCT_Butterfly(block_cb + row_offset, 1);
 	}
 
 	// process columns
 	unsigned int col_offset;
 	for (unsigned int col = 0; col < BLOCK_AXIS_SIZE; col++) {
 		col_offset = col << BLOCK_AXIS_SIZE_LOG2;
-		CUD8x8DCT_Butterfly(block_y + col_offset, BLOCK_AXIS_SIZE);
-		CUD8x8DCT_Butterfly(block_cr + col_offset, BLOCK_AXIS_SIZE);
-		CUD8x8DCT_Butterfly(block_cb + col_offset, BLOCK_AXIS_SIZE);
+		CUD8x8DCT_Butterfly(block_y + col, BLOCK_AXIS_SIZE);
+		CUD8x8DCT_Butterfly(block_cr + col, BLOCK_AXIS_SIZE);
+		CUD8x8DCT_Butterfly(block_cb + col, BLOCK_AXIS_SIZE);
 	}
 
 	for (unsigned int i = 0; i < BLOCK_SIZE; i++) {
@@ -106,9 +104,9 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 		const float quantizationLuminance = InvertQuantizationTable50Luminance[i];
 		const float quantizationChrominance = InvertQuantizationTable50Chrominance[i];
 
-		dct_result_buffer_ptr[(Y << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_y[i], quantizationLuminance);
-		dct_result_buffer_ptr[(Cr << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cr[i], quantizationChrominance);
-		dct_result_buffer_ptr[(Cb << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cb[i], quantizationChrominance);
+		dct_result_buffer_ptr[(Y_INDEX << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_y_ptr[i], quantizationLuminance);
+		dct_result_buffer_ptr[(Cr_INDEX << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cr_ptr[i], quantizationChrominance);
+		dct_result_buffer_ptr[(Cb_INDEX << BLOCK_SIZE_LOG2) + zigzagIndex] = Float2SignedShort(block_cb_ptr[i], quantizationChrominance);
 	}
 }
 
@@ -156,40 +154,45 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 	__shared__ float block_cb[BLOCK_SIZE];
 
 	const int block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
-	const int thread_dispatch_idx = (threadIdx.y << BLOCK_AXIS_SIZE_LOG2) + threadIdx.x;
 
 	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
+
+	float* block_y_ptr = block_y;
+	float* block_cr_ptr = block_cr;
+	float* block_cb_ptr = block_cb;
 
 #pragma unroll
 
 	for (unsigned int i = 0; i < BLOCK_SIZE; i++) {
 		const unsigned char zigzagInvert = ZigZagIndexInvert[i];
-		int quantizationLuminance = ForwardQuantizationTable50Luminance[zigzagInvert];
-		int quantizationChrominance = ForwardQuantizationTable50Chrominance[zigzagInvert];
+		const int quantizationLuminance = ForwardQuantizationTable50Luminance[zigzagInvert];
+		const int quantizationChrominance = ForwardQuantizationTable50Chrominance[zigzagInvert];
 
-		short swapY = dct_result_buffer_ptr[(Y << BLOCK_SIZE_LOG2) + i];
-		short swapCr = dct_result_buffer_ptr[(Cr << BLOCK_SIZE_LOG2) + i];
-		short swapCb = dct_result_buffer_ptr[(Cb << BLOCK_SIZE_LOG2) + i];
+		const short swapY = dct_result_buffer_ptr[(Y_INDEX << BLOCK_SIZE_LOG2) + i];
+		const short swapCr = dct_result_buffer_ptr[(Cr_INDEX << BLOCK_SIZE_LOG2) + i];
+		const short swapCb = dct_result_buffer_ptr[(Cb_INDEX << BLOCK_SIZE_LOG2) + i];
 
-		block_y[zigzagInvert] = SignedShort2Float(swapY, quantizationLuminance);;
-		block_cr[zigzagInvert] = SignedShort2Float(swapCr, quantizationChrominance);
-		block_cb[zigzagInvert] = SignedShort2Float(swapCb, quantizationChrominance);
+		block_y_ptr[zigzagInvert] = SignedShort2Float(swapY, quantizationLuminance);;
+		block_cr_ptr[zigzagInvert] = SignedShort2Float(swapCr, quantizationChrominance);
+		block_cb_ptr[zigzagInvert] = SignedShort2Float(swapCb, quantizationChrominance);
 	}
 
 	// rocess rows
+	unsigned int row_offset;
 	for (unsigned int row = 0; row < BLOCK_AXIS_SIZE; row++) {
-		CUD8x8DCT_Butterfly(block_y + row, 1);
-		CUD8x8DCT_Butterfly(block_cr + row, 1);
-		CUD8x8DCT_Butterfly(block_cb + row, 1);
+		row_offset = row << BLOCK_AXIS_SIZE_LOG2;
+		CUD8x8IDCT_Butterfly(block_y + row_offset, 1);
+		CUD8x8IDCT_Butterfly(block_cr + row_offset, 1);
+		CUD8x8IDCT_Butterfly(block_cb + row_offset, 1);
 	}
 
 	// process columns
 	unsigned int col_offset;
 	for (unsigned int col = 0; col < BLOCK_AXIS_SIZE; col++) {
 		col_offset = col << BLOCK_AXIS_SIZE_LOG2;
-		CUD8x8DCT_Butterfly(block_y + col_offset, BLOCK_AXIS_SIZE);
-		CUD8x8DCT_Butterfly(block_cr + col_offset, BLOCK_AXIS_SIZE);
-		CUD8x8DCT_Butterfly(block_cb + col_offset, BLOCK_AXIS_SIZE);
+		CUD8x8IDCT_Butterfly(block_y + col, BLOCK_AXIS_SIZE);
+		CUD8x8IDCT_Butterfly(block_cr + col, BLOCK_AXIS_SIZE);
+		CUD8x8IDCT_Butterfly(block_cb + col, BLOCK_AXIS_SIZE);
 	}
 
 	unsigned int frame_buffer_y = blockIdx.y << BLOCK_AXIS_SIZE_LOG2;
@@ -202,18 +205,26 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 			unsigned int frame_buffer_idx = (frame_buffer_y + j) * frame_buffer_stride + (frame_buffer_x + i);
 			frame_buffer_idx *= SRC_COLOR_SIZE;
 
+			unsigned char* frame_buffer_ptr = frame_buffer + frame_buffer_idx;
+
 			unsigned int block_copy_dst_idx = (j << BLOCK_AXIS_SIZE_LOG2) + i;
 
-			float r = Conv2R(block_y[block_copy_dst_idx], block_cr[block_copy_dst_idx]);
-			float g = Conv2G(block_y[block_copy_dst_idx], block_cr[block_copy_dst_idx], block_cb[block_copy_dst_idx]);
-			float b = Conv2B(block_y[block_copy_dst_idx], block_cb[block_copy_dst_idx]);
-			char rb = r > (float)255;
-			char gb = g > (float)255;
-			char bb = b > (float)255;
-			frame_buffer[frame_buffer_idx + R] = (unsigned char)(rb * (float)255 + (1 - rb) * r);
-			frame_buffer[frame_buffer_idx + G] = (unsigned char)(gb * (float)255 + (1 - gb) * g);
-			frame_buffer[frame_buffer_idx + B] = (unsigned char)(bb * (float)255 + (1 - bb) * b);
-			frame_buffer[frame_buffer_idx + A] = (unsigned char)255;
+			float y = block_y[block_copy_dst_idx];
+			float cr = block_cr[block_copy_dst_idx];
+			float cb = block_cb[block_copy_dst_idx];
+
+			float r = Conv2R(y, cr);
+			float g = Conv2G(y, cr, cb);
+			float b = Conv2B(y, cb);
+
+			char rb = r > 255.0f;
+			char gb = g > 255.0f;
+			char bb = b > 255.0f;
+
+			frame_buffer_ptr[R_INDEX] = (unsigned char)(rb * 255.0f + (1.0f - rb) * r);
+			frame_buffer_ptr[G_INDEX] = (unsigned char)(gb * 255.0f + (1.0f - gb) * g);
+			frame_buffer_ptr[B_INDEX] = (unsigned char)(bb * 255.0f + (1.0f - bb) * b);
+			frame_buffer_ptr[A_INDEX] = (unsigned char)255;
 		}
 	}
 }
