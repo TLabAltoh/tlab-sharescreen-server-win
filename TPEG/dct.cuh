@@ -60,8 +60,8 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 	float* block_cb_ptr = block_cb;
 
 #pragma unroll
-
 	for (unsigned int i = 0; i < BLOCK_AXIS_SIZE; i++) {
+#pragma unroll
 		for (unsigned int j = 0; j < BLOCK_AXIS_SIZE; j++) {
 
 			unsigned int frame_buffer_idx = (frame_buffer_y + j) * frame_buffer_stride + (frame_buffer_x + i);
@@ -83,6 +83,7 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 
 	// rocess rows
 	unsigned int row_offset;
+#pragma unroll
 	for (unsigned int row = 0; row < BLOCK_AXIS_SIZE; row++) {
 		row_offset = row << BLOCK_AXIS_SIZE_LOG2;
 		CUD8x8DCT_Butterfly(block_y + row_offset, 1);
@@ -92,6 +93,7 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 
 	// process columns
 	unsigned int col_offset;
+#pragma unroll
 	for (unsigned int col = 0; col < BLOCK_AXIS_SIZE; col++) {
 		col_offset = col << BLOCK_AXIS_SIZE_LOG2;
 		CUD8x8DCT_Butterfly(block_y + col, BLOCK_AXIS_SIZE);
@@ -99,6 +101,7 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 		CUD8x8DCT_Butterfly(block_cb + col, BLOCK_AXIS_SIZE);
 	}
 
+#pragma unroll
 	for (unsigned int i = 0; i < BLOCK_SIZE; i++) {
 		const unsigned char zigzagIndex = ZigZagIndexForward[i];
 		const float quantizationLuminance = InvertQuantizationTable50Luminance[i];
@@ -162,7 +165,6 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 	float* block_cb_ptr = block_cb;
 
 #pragma unroll
-
 	for (unsigned int i = 0; i < BLOCK_SIZE; i++) {
 		const unsigned char zigzagInvert = ZigZagIndexInvert[i];
 		const int quantizationLuminance = ForwardQuantizationTable50Luminance[zigzagInvert];
@@ -179,6 +181,7 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 
 	// rocess rows
 	unsigned int row_offset;
+#pragma unroll
 	for (unsigned int row = 0; row < BLOCK_AXIS_SIZE; row++) {
 		row_offset = row << BLOCK_AXIS_SIZE_LOG2;
 		CUD8x8IDCT_Butterfly(block_y + row_offset, 1);
@@ -188,6 +191,7 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 
 	// process columns
 	unsigned int col_offset;
+#pragma unroll
 	for (unsigned int col = 0; col < BLOCK_AXIS_SIZE; col++) {
 		col_offset = col << BLOCK_AXIS_SIZE_LOG2;
 		CUD8x8IDCT_Butterfly(block_y + col, BLOCK_AXIS_SIZE);
@@ -199,7 +203,9 @@ __global__ void CUD8x8IDCT_RGBFrame(short* dct_result_buffer, unsigned char* fra
 	unsigned int frame_buffer_x = blockIdx.x << BLOCK_AXIS_SIZE_LOG2;
 	unsigned int frame_buffer_stride = gridDim.x << BLOCK_AXIS_SIZE_LOG2;
 
+#pragma unroll
 	for (unsigned int i = 0; i < BLOCK_AXIS_SIZE; i++) {
+#pragma unroll
 		for (unsigned int j = 0; j < BLOCK_AXIS_SIZE; j++) {
 
 			unsigned int frame_buffer_idx = (frame_buffer_y + j) * frame_buffer_stride + (frame_buffer_x + i);

@@ -83,9 +83,11 @@ int main(int argc, char* argv[]) {
         NULL
     );
 
+#if DEBUG_MODE && DEBUG_WINDOW
     // https://www.tokovalue.jp/function/ShowWindow.htm#:~:text=%E3%81%95%E3%82%8C%E3%81%AA%E3%81%84%E3%80%82-,SW_SHOWNA,-%E3%82%A6%E3%82%A3%E3%83%B3%E3%83%89%E3%82%A6%E3%82%92%E7%8F%BE%E5%9C%A8
     ShowWindow(owner_hwnd, SW_SHOWNORMAL);
     UpdateWindow(owner_hwnd);
+#endif
 
     if (OpenSharedMemoryMappingObiect(L"MTPEGServer", L"Shareing") != 1)
     {
