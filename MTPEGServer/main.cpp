@@ -251,7 +251,7 @@ namespace TLab
                 if (_resend_packet_hedder < _packet_buffer ||
                     _resend_packet_hedder > _packet_buffer + 2 * _packet_buffer_size)
                 {
-                    printf("problem is occured\n");
+                    printf("[packet resend request] problem is occured\n");
                     ReleaseMutex(_socket_mutex_handle);
                     return;
                 }
@@ -438,7 +438,7 @@ namespace TLab
 
         _last_frame_final_idx = packet_idx;
 
-        _current_frame_offset = (_current_frame_offset + 1) & (BUFFERS_FRAME_COUNT - 1);
+        _current_frame_offset = (_current_frame_offset + 1) & FRAME_LOOP_NUM;
 
         context->Unmap(_buffer_texture, 0);
 

@@ -115,7 +115,7 @@ int EncodeImage(char* path, int color_size) {
 
 #if true
 	loop_num = BLOCK_SIZE;
-	printf("Log encoded_frame_buffer first one block -------------------\n\n");
+	printf("src_frame_buffer first one block -------------------\n\n");
 	for (int i = 0; i < loop_num; i++) {
 		printf("src_frame_buffer[%d]\t: %d\n", i, src_frame_buffer[i]);
 	}
@@ -131,16 +131,79 @@ int EncodeImage(char* path, int color_size) {
 	TPEG::DestroyDevice();
 
 #if true
+	printf("encoded_frame_buffer first one block -------------\n\n");
 	loop_num = BLOCK_SIZE * ENDIAN_SIZE * DST_COLOR_SIZE;
-	printf("Log encoded_frame_buffer first one block -------------\n\n");
 	for (int i = 0; i < loop_num; i++) {
 		printf("encoded_frame_buffer[%d]\t: %d\n", i, encoded_frame_buffer[i]);
 	}
 	printf("------------------------------------------------------\n\n");
+
+	printf("\ncreateing encoded_frame_buffer file (.tpeg) ...\n");
+	std::ofstream outputfile("encoded_buffer.tpeg", std::ios_base::binary | std::ios_base::out);
+	outputfile << "tpeg" << std::endl;
+	loop_num = width / BLOCK_AXIS_SIZE * height / BLOCK_AXIS_SIZE;
+	for (int i = 0; i < loop_num; i++) {
+		char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)i * (BLOCK_HEDDER_SIZE + BLOCK_SIZE * DST_COLOR_SIZE * ENDIAN_SIZE);
+		byte size_b = (byte)encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B];
+		byte size_g = (byte)encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_G];
+		byte size_r = (byte)encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_R];
+
+		if (size_b == 0) {	// check this block needs to send as packet
+			continue;
+		}
+
+		outputfile << (byte)encoded_frame_buffer_ptr[BLOCK_INDEX_BE];
+		outputfile << (byte)encoded_frame_buffer_ptr[BLOCK_INDEX_LE];
+		outputfile << size_b;
+		outputfile << size_g;
+		outputfile << size_r;
+
+		encoded_frame_buffer_ptr += BLOCK_HEDDER_SIZE;
+		for (int j = 0; j < size_b * ENDIAN_SIZE; j++) {
+			outputfile << *(encoded_frame_buffer_ptr + j);
+		}
+		encoded_frame_buffer_ptr += BLOCK_SIZE * ENDIAN_SIZE;
+		for (int j = 0; j < size_g * ENDIAN_SIZE; j++) {
+			outputfile << *(encoded_frame_buffer_ptr + j);
+		}
+		encoded_frame_buffer_ptr += BLOCK_SIZE * ENDIAN_SIZE;
+		for (int j = 0; j < size_r * ENDIAN_SIZE; j++) {
+			outputfile << *(encoded_frame_buffer_ptr + j);
+		}
+	}
+	outputfile.close();
+	printf("\nfinish create encoded_frame_buffer file ...\n");
+
+	printf("\nreading encoded_frame_buffer file (.tpeg) ...\n");
+	std::ifstream inputfile("encoded_buffer.tpeg", std::ios_base::binary | std::ios_base::in);
+
+	std::string hedder_string;	// read hedder string
+	std::getline(inputfile, hedder_string);
+	std::cout << "hedder string: " << hedder_string << std::endl;
+
+	loop_num = 60; char* byte_value = new char[1];
+	for (int i = 0; i < loop_num; i++) {
+		inputfile.read(byte_value, 1); byte idx_be = (byte)byte_value[0];
+		inputfile.read(byte_value, 1); byte idx_le = (byte)byte_value[0];
+		inputfile.read(byte_value, 1); byte size_b = (byte)byte_value[0];
+		inputfile.read(byte_value, 1); byte size_g = (byte)byte_value[0];
+		inputfile.read(byte_value, 1); byte size_r = (byte)byte_value[0];
+		inputfile.ignore((size_t)(size_b + size_g + size_r) * ENDIAN_SIZE);	// skip n byte
+
+		printf("block[%d] info ...\n", i);
+		printf("idx_be: %d\n", idx_be);
+		printf("idx_le: %d\n", idx_le);
+		printf("size_b: %d\n", size_b);
+		printf("size_g: %d\n", size_g);
+		printf("size_r: %d\n", size_r);
+		printf("\n");
+	}
+	inputfile.close();
+	printf("\nfinish reading encoded_frame_buffer file ...\n");
 #endif
 
 #if true
-	printf("Log decoded_frame_buffer first one block -------------------\n\n");
+	printf("decoded_frame_buffer first one block -------------------\n\n");
 	loop_num = BLOCK_SIZE;
 	for (int i = 0; i < loop_num; i++) {
 		printf("decoded_frame_buffer[%d]\t: %d\n", i, decoded_frame_buffer[i]);
@@ -149,7 +212,7 @@ int EncodeImage(char* path, int color_size) {
 #endif
 
 #if true
-	printf("Log encoded_frame_buffer size ------------------------------\n\n");
+	printf("encoded_frame_buffer size ------------------------------\n\n");
 	loop_num = width / BLOCK_AXIS_SIZE * height / BLOCK_AXIS_SIZE;
 	int sum = 0;
 	for (int i = 0; i < loop_num; i++) {
@@ -175,8 +238,7 @@ int EncodeImage(char* path, int color_size) {
 	printf("------------------------------------------------------\n\n");
 #endif
 
-	// copy decoded frame to org_frame_buffer.
-	src_idx = 0;
+	src_idx = 0;	// copy decoded frame to org_frame_buffer
 	for (int i = 0; i < height; i++) {
 		org_frame_buffer = (unsigned char*)org_frame.GetBits() + (size_t)i * pitch;
 		for (int j = 0; j < width; j++) {

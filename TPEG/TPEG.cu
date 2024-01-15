@@ -96,12 +96,11 @@ namespace TPEG {
 			return 1;
 		}
 
+		// copy encoded_frame_buffer's meta buffer to gpu encoded_frame_buffer
 #if DEBUG
-		// Copy encBuffer's meta buffer to gpu encBuffer
-
 		printf("\n-------------------------------------------------------\n");
 		printf("start copy encoded_frame_buffer's cpu data to gpu memory\n\n");
-
+#endif
 		// CPU --> GPU
 		cudaMemcpy(
 			_encoded_frame_buffer_gpu,
@@ -111,13 +110,14 @@ namespace TPEG {
 		);
 		cudaDeviceSynchronize();
 
+#if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\n-------------------------------------------------------\n");
 
 		printf("\n-------------------------------------------------------\n");
 		printf("set block's index to encoded_frame_buffer\n\n");
-
+#endif
 		dim3 GridDim(_blockWidth, _blockHeight, 1);
 		dim3 BlockDim1(1, 1, 1);
 
@@ -126,15 +126,15 @@ namespace TPEG {
 
 		cudaDeviceSynchronize();
 
+#if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\n-------------------------------------------------------\n");
 
 		printf("\n-------------------------------------------------------\n");
 		printf("start copy encoded_frame_buffer's gpu data to cpu memory\n\n");
-
-		// CPU --> GPU
-		cudaMemcpy(
+#endif
+		cudaMemcpy(	// CPU --> GPU
 			encoded_frame_buffer,
 			_encoded_frame_buffer_gpu,
 			_encoded_frame_buffer_size * sizeof(char),
@@ -142,6 +142,7 @@ namespace TPEG {
 
 		cudaDeviceSynchronize();
 
+#if DEBUG
 		printf("Last error: %s\n", cudaGetErrorString(cudaGetLastError()));
 		printf("process finish\n");
 		printf("\n-------------------------------------------------------\n");
