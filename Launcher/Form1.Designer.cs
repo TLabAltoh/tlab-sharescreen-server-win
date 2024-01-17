@@ -97,7 +97,7 @@
             this.ClientAddr.Name = "ClientAddr";
             this.ClientAddr.Size = new System.Drawing.Size(120, 19);
             this.ClientAddr.TabIndex = 9;
-            this.ClientAddr.Text = "192.168.3.25";
+            this.ClientAddr.Text = "127.0.0.1";
             // 
             // ClientAddrLabel
             // 
