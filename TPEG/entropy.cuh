@@ -27,17 +27,15 @@ __global__ void EntropyForward(short* dct_result_buffer, char* encoded_frame_buf
 
 	char* encoded_frame_buffer_ptr = encoded_frame_buffer + (size_t)block_dispatch_idx * (BLOCK_HEDDER_SIZE + (BLOCK_SIZE * ENDIAN_SIZE) * DST_COLOR_SIZE);
 
-	// Check this block needs to send as packet.
-	if (block_diff_sum_buffer[block_dispatch_idx] == 0) {
-
-		// Reset block diff sum buffer.
-		block_diff_sum_buffer[block_dispatch_idx] = 0;
+	if (block_diff_sum_buffer[block_dispatch_idx] < DIFF_THRESHOLD) {	// Check this block needs to send as packet.
 
 		// Set flag "no need to encode".
 		encoded_frame_buffer_ptr[BLOCK_BIT_SIZE_B + color_channel_idx] = (char)NO_NEED_TO_ENCODE;
 
 		return;
 	}
+
+	block_diff_sum_buffer[block_dispatch_idx] = 0;	// Reset block diff sum buffer
 
 	// This pixel color's data grame pointer.
 	char* pixel_data_ptr = encoded_frame_buffer_ptr + BLOCK_HEDDER_SIZE + ((size_t)color_channel_idx << (BLOCK_SIZE_LOG2 + ENDIAN_SIZE_LOG2));

@@ -47,7 +47,9 @@ __global__ void CUD8x8DCT_RGBFrame(unsigned char* frame_buffer, short* dct_resul
 
 	const int block_dispatch_idx = blockIdx.y * gridDim.x + blockIdx.x;
 
-	if (block_diff_sum_buffer[block_dispatch_idx] == 0) return;
+	if (block_diff_sum_buffer[block_dispatch_idx] < DIFF_THRESHOLD) {
+		return;
+	}
 
 	short* dct_result_buffer_ptr = dct_result_buffer + (size_t)block_dispatch_idx * BLOCK_SIZE * DST_COLOR_SIZE;
 
