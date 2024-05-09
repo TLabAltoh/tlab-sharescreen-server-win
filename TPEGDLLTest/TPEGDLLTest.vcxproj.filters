@@ -4,7 +4,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TPEGImage.h" />
-    <ClInclude Include="Common.h" />
+    <None Include="README.md" />
   </ItemGroup>
 </Project>

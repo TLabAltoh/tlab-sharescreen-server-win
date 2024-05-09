@@ -42,9 +42,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)TLabShareScreenWireless\bin\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -61,6 +63,12 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
     </CudaCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -81,25 +89,74 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>%(CodeGeneration)</CodeGeneration>
     </CudaCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.dll*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.exp*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.lib*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.pdb" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.pdb*"
+
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)Launcher\bin\$(Platform)\Release\TPEG.dll*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)Launcher\bin\$(Platform)\Release\TPEG.exp*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)Launcher\bin\$(Platform)\Release\TPEG.lib*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.pdb" "$(SolutionDir)Launcher\bin\$(Platform)\Release\TPEG.pdb*"
+
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Debug\TPEG.dll*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Debug\TPEG.exp*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Debug\TPEG.lib*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.pdb" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Debug\TPEG.pdb*"
+
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Release\TPEG.dll*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Release\TPEG.exp*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Release\TPEG.lib*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.pdb" "$(SolutionDir)MTPEGServer\bin\$(Platform)\Release\TPEG.pdb*"
+
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Debug\TPEG.dll*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Debug\TPEG.exp*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Debug\TPEG.lib*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.pdb" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Debug\TPEG.pdb*"
+
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Release\TPEG.dll*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Release\TPEG.exp*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Release\TPEG.lib*"
+xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.pdb" "$(SolutionDir)TPEGDLLTest\bin\$(Platform)\Release\TPEG.pdb*"</Command>
+      <Message>Copying built files to multiple projects</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="TPEG.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TPEG_Initialize.cuh" />
-    <ClInclude Include="TPEG_Buffer.cuh" />
-    <ClInclude Include="TPEG_GetDiffSum.cuh" />
-    <ClInclude Include="TPEG_Common.h" />
-    <ClInclude Include="TPEG_Kernels.cuh" />
-    <ClInclude Include="TPEG_Entropy.cuh" />
-    <ClInclude Include="TLabCUDA_Common.h" />
-    <ClInclude Include="TPEG_DCT.cuh" />
+    <ClInclude Include="cuda_common.h" />
+    <ClInclude Include="cuda_math.cuh" />
+    <ClInclude Include="dct.cuh" />
+    <ClInclude Include="dct_util.h" />
+    <ClInclude Include="diff_sum.cuh" />
+    <ClInclude Include="entropy.cuh" />
+    <ClInclude Include="image_process_util.h" />
+    <ClInclude Include="initialize.cuh" />
+    <ClInclude Include="kernels.cuh" />
+    <ClInclude Include="test.h" />
+    <ClInclude Include="test_common.h" />
+    <ClInclude Include="tpeg_buffer.cuh" />
+    <ClInclude Include="tpeg_common.h" />
     <ClInclude Include="TPEG.h" />
-    <ClInclude Include="TLabCUDA_Math.cuh" />
-    <ClInclude Include="UserCnf.cuh" />
+    <ClInclude Include="tpeg_cuda.h" />
+    <ClInclude Include="user_conf.cuh" />
+    <ClInclude Include="test_util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Document.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sample_image.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

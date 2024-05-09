@@ -1,7 +1,34 @@
 ﻿#pragma once
 
-#include "TPEGImage.h"
-#include "Common.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "iostream"
+#include "TPEG.h"
+#include "image_process_util.h"
+#include "test_common.h"
+
+void memory_mollic_test() {
+	std::cout << "---- this is test program using CUDA ----" << std::endl;
+
+	float* host_x, * host_y;
+	int N = 1000000;
+
+	// Create CPUs area
+	host_x = (float*)malloc(N * sizeof(float));
+	host_y = (float*)malloc(N * sizeof(float));
+
+	// do any function here.
+
+	// Check if the calculation is done correctly.
+	float sum = 0.0f;
+	for (int j = 0; j < N; j++) {
+		sum += host_y[j];
+	}
+
+	std::cout << "sum: " << sum << std::endl;
+
+	std::cout << "---- process finish ! ----" << std::endl;
+}
 
 int cosin_table_create() {
 	// create cosin value table.
@@ -102,48 +129,42 @@ int invert_quantization_table_create(int type) {
 }
 #pragma endregion
 
-int pixel_tweak(int* width, int* height, int blockAxisSize) {
+int pixel_tweak(int* width, int* height, int block_axis_size) {
 	// Adjust to be a multiple of 8.
 	int tmp;
 	float tmp1;
 	float tmp2;
 
-	tmp = *width / blockAxisSize;
-	tmp1 = (float)*width / (float)blockAxisSize;
+	tmp = *width / block_axis_size;
+	tmp1 = (float)*width / (float)block_axis_size;
 	tmp2 = tmp1 - tmp;
 
 	if (tmp2 > 0) {
-		*width = *width + tmp2 * blockAxisSize;
+		*width = *width + tmp2 * block_axis_size;
 	}
 
-	tmp = *height / blockAxisSize;
-	tmp1 = (float)*height / (float)blockAxisSize;
+	tmp = *height / block_axis_size;
+	tmp1 = (float)*height / (float)block_axis_size;
 	tmp2 = tmp1 - tmp;
 
 	if (tmp2 > 0) {
-		*height = *height + tmp2 * blockAxisSize;
+		*height = *height + tmp2 * block_axis_size;
 	}
 
 	return 0;
 }
 
 #pragma region tpeg_encode_test
-TCHAR* current_working_directory()
-{
-	TCHAR pwd[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, pwd);
-	return pwd;
-}
 
 int tpeg_encode_test() {
-	const char* imagePath = "testImage.bmp";
-	int colorSize = 4;
+	const char* image_path = "sample_image.png";
+	int color_size = 4;
 
-	std::wcout << L"----\t current directory : " << current_working_directory() << L"\t----" << std::endl;
+	// std::wcout << L"----\t current directory : " << current_working_directory() << L"\t----" << std::endl;	// not working correctly now
 
 	std::cout << "----\t this is test program using CUDA code as a library ! \t----" << std::endl;
 
-	std::cout << "----\t process finish ! " << BitMapEncodeTest((char*)imagePath, colorSize) << " [ms] \t----" << std::endl;
+	std::cout << "----\t process finish ! " << EncodeImage((char*)image_path, color_size) << " [ms] \t----" << std::endl;
 
 	std::cout << "----\t destroyed TPEG device \t\t----" << std::endl;
 
@@ -186,14 +207,14 @@ int for_loop_test() {
 }
 
 #pragma region bit_translate_test
-short TmpForward(char sign, float result, float quantization) {
+short Float2SignedShort(char sign, float result, float quantization) {
 	return (short)(
 		(unsigned short)(result * quantization * (1 - sign * 2)) +
 		(unsigned short)(sign * (1 << (sizeof(unsigned short) * 8 - 1)))
 		);
 }
 
-float TmpInvert(char sign, short swap, int quantization) {
+float SignedShort2Float(char sign, short swap, int quantization) {
 	return (float)(
 		(short)(
 			(unsigned short)swap -
@@ -203,20 +224,23 @@ float TmpInvert(char sign, short swap, int quantization) {
 }
 
 int bit_translate_test(float value) {
+
+	printf("\nquantization forward / invert test ...\n");
+
 	float quantization_forward = (float)1 / (float)16;
 	int quantizatoin_invert = 16;
 
 	char sign = value < 0;
-	short forward = TmpForward(sign, value, quantization_forward);
-	printf("sign: %d, value: %f, quantization_forward: %f, forward: %d\n", sign, value, quantization_forward, forward);
+	short forward = Float2SignedShort(sign, value, quantization_forward);
+	printf("sign: %d\t, value: %f\t, quantization_forward: %f\t, forward: %d\n", sign, value, quantization_forward, forward);
 
-	float invert = TmpInvert(sign, forward, quantizatoin_invert);
-	printf("sign: %d, forward: %d, quantization_invert: %d, invert: %f\n", sign, forward, quantizatoin_invert, invert);
+	float invert = SignedShort2Float(sign, forward, quantizatoin_invert);
+	printf("sign: %d\t, forward: %d\t, quantization_invert: %d\t, invert: %f\n", sign, forward, quantizatoin_invert, invert);
 
-	short befor = (short)(value * quantization_forward);
-	printf("befor: %d, after: %d\n", befor, befor * quantizatoin_invert);
+	short tmp = (short)(value * quantization_forward);
+	printf("(short)(value * quantization_forward): %d\t, (value * quantization_forward) * quantizatoin_invert: %d\n", tmp, tmp * quantizatoin_invert);
 
-	printf("sizeof(short): %d\n", (int)sizeof(short));
+	printf("\nfinish all process ...\n");
 
 	return 0;
 }
@@ -225,6 +249,7 @@ int bit_translate_test(float value) {
 int main() {
 	// return bit_translate_test(-859.0f);
 	return tpeg_encode_test();
+	// return memory_mollic_test()
 	// return cosin_table_create();
 	// return invert_quantization_table_create(1);
 }

@@ -1,63 +1,40 @@
 #pragma once
 
-#include "TLabCUDA_Common.h"
-#include "TLabCUDA_Math.cuh"
-#include "UserCnf.cuh"
+#define R_INDEX 0
+#define G_INDEX 1
+#define B_INDEX 2
+#define A_INDEX 3
 
-// RGBA INDEX.
-#define R_IDX 0
-#define G_IDX 1
-#define B_IDX 2
-#define A_IDX 3
+#define Y_INDEX 0
+#define Cr_INDEX 1
+#define Cb_INDEX 2
 
-// YCrCb INDEX.
-#define Y_IDX 0
-#define Cr_IDX 1
-#define Cb_IDX 2
-
-// THRESHOLD TO PIXEL UPDATE.
 #define DIFF_THRESHOLD 32
 #define SAME_VALUE_FLAG 0
-#define COUNT_IDX 1
+#define COUNT 1
+#define NO_NEED_TO_ENCODE 0
 
-// BLOCK_HEDDER_SIZE
-// BLOCK INDEX: 2BYTE
-// PIXEL DATA SIZE PER BLOCK: 3BYTE
+/**
+*  BLOCK_HEDDER_SIZE
+*  ----------------------
+*  BLOCK INDEX: 2BYTE
+*  PIXEL DATA SIZE PER BLOCK: 3BYTE
+*/
 #define BLOCK_HEDDER_SIZE 5
-#define BLOCK_IDX_UPPER_IDX 0
-#define BLOCK_IDX_LOWER_IDX 1
-#define BLOCK_BIT_SIZE_IDX_B 2
-#define BLOCK_BIT_SIZE_IDX_G 3
-#define BLOCK_BIT_SIZE_IDX_R 4
+#define BLOCK_INDEX_BE 0
+#define BLOCK_INDEX_LE 1
+#define BLOCK_BIT_SIZE_B 2
+#define BLOCK_BIT_SIZE_G 3
+#define BLOCK_BIT_SIZE_R 4
 
-// COLOR_SIZE
-#define ORG_COLOR_SIZE 4
+#define SRC_COLOR_SIZE 4
 #define DST_COLOR_SIZE 3
 
-// 8 * 8 BLOCK'S AXIS SIZE.
 #define BLOCK_AXIS_SIZE	8
-// LOG2(BLOCK_AXIS_SIZE)
-#define BLOCK_AXIS_SIZE_LOG2 3
+#define BLOCK_AXIS_SIZE_LOG2 3	// LOG2(BLOCK_AXIS_SIZE)
 
+#define BLOCK_SIZE 64	// BLOCK_AXIS_SIZE * BLOCK_AXIS_SIZE
+#define BLOCK_SIZE_LOG2 6	// LOG2(BLOCK_SIZE)
 
-// BLOCK_AXIS_SIZE * BLOCK_AXIS_SIZE
-#define BLOCK_SIZE 64
-// LOG2(BLOCK_SIZE)
-#define BLOCK_SIZE_LOG2 6
-
-
-// BLOCK_SIZE * ORG_COLOR_SIZE
-#define BLOCK_SIZE_ORG_COLOR 256
-// LOG2(BLOCK_SIZE_ORG_COLOR)
-#define BLOCK_SIZE_ORG_COLOR_LOG2 8
-
-
-// BLOCK_SIZE * ENDIAN_SIZE
-#define ENC_BUFFER_BLOCK_SIZE 128
-// LOG2(ENC_BUFFER_BLOCK_SIZE)
-#define ENC_BUFFER_BLOCK_SIZE_LOG2 7
-
-// RUN(6BIT) + LEVEL(10BIT) = 2BYTE
-#define ENDIAN_SIZE 2
-// LOG2(ENDIAN_SIZE)
-#define ENDIAN_SIZE_LOG2 1
+#define ENDIAN_SIZE 2	// run_length (6 bit) + level (10 bit) = 16 bit = 2 byte
+#define ENDIAN_SIZE_LOG2 1	// LOG2(ENDIAN_SIZE)
