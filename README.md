@@ -1,5 +1,5 @@
 # TLabShareScreen_Server
-A software encoder server application with a simple video codec using Nvidia's CUDA and Windows Graphics Cpature API.
+Software frame encoder using CUDA and cast encoded frames over UDP. Trying to implement a custom streaming protocol and shader based frame encoder/decoder for screencast.
 
 ## Demonstration (with [TLabShareScreen_Client_Unity_Android](https://github.com/TLabAltoh/TLabShareScreen_Client_Unity_Android))
 
