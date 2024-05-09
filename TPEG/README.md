@@ -1,22 +1,16 @@
 # TPEG
-A library for frame encoding and decoding using CUDA, implemented based on JPEG or without Huffman encoding.
+This is a library for encoding and decoding bitmap frames with CUDA, compression algorithms based on JPEG without Huffman encoding.
 
-- use prject/property/detail/character_set mbcs
-
-# output destination folder
-- $(SolutionDir)Launcher\bin\$(Platform)\$(Configuration)\
-- $(SolutionDir)TPEGDLLTest\bin\$(Platform)\$(Configuration)\
-- $(SolutionDir)TPEG\bin\$(Platform)\$(Configuration)\
-
-# after build event
-- [xcopy if directory no exist](https://superuser.com/questions/119263/how-to-copy-a-file-to-a-directory-in-dos-and-create-directories-if-necessary)
-- [xcopy refarence](https://learn.microsoft.com/ja-jp/windows-server/administration/windows-commands/xcopy)
-
-## debug
+## Output Destination Folder
 ```
+$(SolutionDir)Launcher\bin\$(Platform)\$(Configuration)\
+$(SolutionDir)TPEGDLLTest\bin\$(Platform)\$(Configuration)\
+$(SolutionDir)TPEG\bin\$(Platform)\$(Configuration)\
 ```
 
-## release
+## Build Event
+
+### Release
 ```
 xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.dll*"
 xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.exp*"
