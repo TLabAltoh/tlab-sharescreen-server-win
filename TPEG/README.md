@@ -11,7 +11,7 @@ $(SolutionDir)TPEG\bin\$(Platform)\$(Configuration)\
 ## Build Event
 
 ### Release
-```
+```bat
 xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.dll" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.dll*"
 xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.exp" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.exp*"
 xcopy /y "$(SolutionDir)TPEG\bin\$(Platform)\Release\TPEG.lib" "$(SolutionDir)Launcher\bin\$(Platform)\Debug\TPEG.lib*"
