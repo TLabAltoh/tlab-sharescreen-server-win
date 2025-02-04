@@ -1,6 +1,6 @@
 # tlab-sharescreen-server-win
 
-<img src="media/pixture_box.png" height="256"></img>
+<img src="media/pixture_box.png"></img>
 
 Software frame encoder using CUDA and cast encoded frames over UDP. Trying to implement a custom streaming protocol and shader based frame encoder/decoder for screencast.
 
